@@ -264,14 +264,28 @@ export default function App() {
   };
 
   // ៤. មុខងារបញ្ជូល និងកែប្រែទិន្នន័យ
-  const handleSaveStudent = async (formData) => {
+  const handleSaveStudent = async (data) => {
+  if (!data.studentId) return alert("សូមបញ្ចូល ID សិស្ស");
+  
+  setIsSaving(true);
   try {
-    // ប្រើតែ Firestore (db) បានហើយ កុំប្រើ auth.createUser...
     const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
-    await addDoc(colRef, { ...formData, createdAt: serverTimestamp() });
-    alert("ជោគជ័យ!");
+    
+    // បញ្ចូលទិន្នន័យទៅ Firestore
+    await addDoc(colRef, {
+      studentId: data.studentId,
+      name: data.name,
+      gender: data.gender,
+      grade: data.grade,
+      createdAt: serverTimestamp()
+    });
+
+    alert("រក្សាទុកជោគជ័យ! ឥឡូវសិស្សអាចប្រើ ID នេះ Login បានហើយ");
+    setIsModalOpen(false);
   } catch (error) {
-    console.error("Error:", error);
+    console.error("Firebase Error:", error);
+  } finally {
+    setIsSaving(false);
   }
 };
 
@@ -947,9 +961,12 @@ export default function App() {
                  </div>
                  <div className="flex flex-col-reverse sm:flex-row gap-3 pt-4">
                     <button onClick={() => setIsModalOpen(false)} disabled={isSaving} className="w-full sm:flex-1 py-3.5 rounded-xl bg-white/5 text-sm hover:bg-white/10 transition-colors font-medium disabled:opacity-50">បោះបង់</button>
-                    <button onClick={handleSaveStudent} disabled={isSaving} className="w-full sm:flex-1 py-3.5 rounded-xl bg-blue-600 font-bold text-sm hover:bg-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
-                      {isSaving ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក'}
-                    </button>
+                    <button 
+                    onClick={() => handleSaveStudent(formData)} // បន្ថែម () => និង formData ត្រង់នេះ
+                    disabled={isSaving} 
+                    className="w-full sm:flex-1 py-3.5 rounded-xl bg-blue-600 font-bold text-sm hover:bg-blue-500 transition-colors disabled:opacity-70 disabled:cursor-not-allowed">
+                       {isSaving ? 'កំពុងរក្សាទុក...' : 'រក្សាទុក'}
+                     </button>
                  </div>
               </div>
            </div>
