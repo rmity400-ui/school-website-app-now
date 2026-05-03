@@ -307,9 +307,7 @@ export default function App() {
       } catch (error) {
         console.error("Delete Error:", error);
       }
-    }
-  };
-
+};
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleLoginSubmit();
@@ -980,3 +978,4 @@ export default function App() {
 
     </div>
   );
+}
