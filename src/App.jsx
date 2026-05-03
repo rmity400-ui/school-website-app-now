@@ -26,12 +26,9 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
-
-// ៣. Initialize Firebase
 const app = initializeApp(firebaseConfig);
-// ៤. បង្កើត Variable auth និង db (កន្លែងនេះហើយដែលអ្នកកំពុងខ្វះ)
-const auth = getAuth(app); 
-const db = getFirestore(app);
+const db = getFirestore(app); // បើខ្វះបន្ទាត់នេះ វានឹងរក db មិនឃើញ
+const auth = getAuth(app);
 
 // បន្ទាប់ពីនេះ ទើបអ្នកអាចប្រើ auth និង db នៅក្នុង useEffect ឬ Actions ផ្សេងៗបាន
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
@@ -263,34 +260,26 @@ export default function App() {
 
   // កែសម្រួលមុខងារ Save Student (តាមសំណើរបស់អ្នក ដោយប្រើ Helper Function ដើម្បីចៀសវាង Permission Error)
   const handleSaveStudent = async () => {
-    if (!formData.name || !formData.studentId || !user) return;
-    setIsSaving(true);
-    try {
-      // កែត្រង់នេះ៖ ប្រើប្រាស់ផ្លូវទិន្នន័យដែលបានកំណត់
-      const colRef = getStudentsCollectionPath(); 
-      
-      if (editingId) {
-        // ប្រើ Path ដែលត្រឹមត្រូវសម្រាប់ Update
-        await updateDoc(getStudentDocPath(editingId), formData);
-      } else {
-        // បញ្ចូលទៅក្នុង Collection 
-        await addDoc(colRef, { 
-          ...formData, 
-          createdAt: serverTimestamp() 
-        });
-      }
-      
-      // បន្ទាប់ពី Save ជោគជ័យ វានឹងលោតបង្ហាញក្នុង Web ភ្លាម ព្រោះមាន onSnapshot
-      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-      setEditingId(null);
-      setIsModalOpen(false);
-    } catch (e) { 
-      console.error("Save Error:", e); 
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  if (!formData.name || !formData.studentId) return;
+  setIsSaving(true);
+  try {
+    // ត្រូវប្រើ Path ខ្លី 'students' ដូចក្នុង useEffect ទាញទិន្នន័យដែរ
+    const colRef = collection(db, 'students'); 
+    
+    await addDoc(colRef, { 
+      ...formData, 
+      createdAt: serverTimestamp() 
+    });
 
+    // បិទ Modal និង Clear form
+    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+    setIsModalOpen(false);
+  } catch (e) { 
+    console.error("Save Error:", e); // បើនៅតែអត់ដើរ មើល Error ក្នុង Console ត្រង់នេះ
+  } finally {
+    setIsSaving(false);
+  }
+};
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
     setEditingId(std.id);
