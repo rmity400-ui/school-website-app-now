@@ -272,10 +272,11 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
-      await deleteDoc(doc(db, 'students', appId, 'public', 'data', 'students', id));
-    }
-  };
+  if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
+    // ត្រូវប្រើ Path ខ្លីដូចគេដូចឯង
+    await deleteDoc(doc(db, 'students', id));
+  }
+};
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
