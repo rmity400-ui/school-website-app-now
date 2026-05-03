@@ -40,7 +40,6 @@ const firebaseConfig = {
 };
 
 // បង្កើត Variable ឱ្យបានត្រឹមត្រូវតាមលំដាប់
-const auth = getAuth(app); // បន្ថែមជួរនេះ ប្រសិនបើកូដខាងក្រោមត្រូវការប្រើពាក្យ 'auth'
 const app = initializeApp(firebaseConfig);
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
