@@ -36,17 +36,18 @@ const appId = "digital-school"; // អ្នកអាចប្តូរឈ្ម
 
 // ១. មុខងារទាញទិន្នន័យមកបង្ហាញ (Real-time Sync)
 useEffect(() => {
-  if (!user) return;
-  // កែ Path មកជា artifacts -> appId -> public -> data -> students
+  if (!user) return; // ឥឡូវវានឹងលែង Error ទៀតហើយ ព្រោះយើងមាន State user
+
+  // កំណត់ផ្លូវតាមលំដាប់ artifacts -> public -> data -> students
   const q = query(
-    collection(db, 'artifacts', appId, 'public', 'data', 'students'), 
+    collection(db, 'program', 'digital-school', 'public', 'data', 'students'), 
     orderBy('createdAt', 'desc')
   );
-  
+
   const unsubscribe = onSnapshot(q, (snapshot) => {
     setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
   }, (err) => console.error("Firestore Error:", err));
-  
+
   return () => unsubscribe();
 }, [user]);
 
@@ -186,7 +187,29 @@ export default function App() {
 
   // Study View State
   const [studyView, setStudyView] = useState('main'); 
+  // បន្ថែម useState មួយនេះ
+  const [user, setUser] = useState(null); 
 
+// បន្ទាប់មកត្រូវប្រាកដថា useEffect សម្រាប់ Auth របស់អ្នកសរសេរបែបនេះ:
+useEffect(() => {
+  const initAuth = async () => {
+    try {
+      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+        await signInWithCustomToken(auth, __initial_auth_token);
+      } else {
+        await signInAnonymously(auth);
+      }
+    } catch (err) {
+      console.error("Auth Error:", err);
+    }
+  };
+  initAuth();
+  
+  // បន្ទាត់នេះនឹងយកទិន្នន័យ user ទៅដាក់ក្នុង State ខាងលើ
+  return onAuthStateChanged(auth, (currentUser) => {
+    setUser(currentUser);
+  });
+}, []);
   // Dummy Chart Data
   const lineData = [{name: 'មករា', pv: 300}, {name: 'កុម្ភៈ', pv: 600}, {name: 'មីនា', pv: 800}, {name: 'មេសា', pv: 500}, {name: 'ឧសភា', pv: 1100}, {name: 'មិថុនា', pv: 1400}];
   const pieData = [
