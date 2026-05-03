@@ -191,21 +191,26 @@ export default function App() {
   }, []);
 
   // ៣. ទាញទិន្នន័យ (Query) ដោយប្រើ Path ជាក់លាក់
-  useEffect(() => {
-    if (!user) return; // ឥឡូវវានឹងលែង Error ទៀតហើយ
+ useEffect(() => {
+    // ❌ លុប ឬ Comment បន្ទាត់នេះចោលសិនដើម្បីតេស្ត
+    // if (!user) return; 
 
-    // កំណត់ផ្លូវតាមលំដាប់ដែលអ្នកចង់បាន
+    // កំណត់ផ្លូវទាញទិន្នន័យ
     const q = query(
       collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'), 
       orderBy('createdAt', 'desc')
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    }, (err) => console.error("Firestore Error:", err));
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      console.log("ទិន្នន័យដែលទាញបាន៖", data); // ឆែកមើលក្នុង Console
+      setStudents(data);
+    }, (err) => {
+      console.error("Firestore Error:", err);
+    });
 
     return () => unsubscribe();
-  }, [user]);
+}, [user]); // ប្រសិនបើអ្នកដក if(!user) ចេញ អ្នកអាចទុក [user] ឬដាក់ [] ក៏បាន
 
   // Actions
   const handleMenuClick = (id) => {
