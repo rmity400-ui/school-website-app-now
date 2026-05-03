@@ -14,74 +14,11 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
-
-// ២. កំណត់ Firebase Config (ប្រើ Environment Variables ដូចដែលយើងបានដាក់ក្នុង Vercel)
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
-};
+// --- Firebase Configuration ---
+const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app); // បើខ្វះបន្ទាត់នេះ វានឹងរក db មិនឃើញ
 const auth = getAuth(app);
-
-// បន្ទាប់ពីនេះ ទើបអ្នកអាចប្រើ auth និង db នៅក្នុង useEffect ឬ Actions ផ្សេងៗបាន
-// ប្រកាស appId នៅខាងលើគេបង្អស់
-const appId = "digital-school"; // អ្នកអាចប្តូរឈ្មោះតាមចិត្ត
-
-// ១. មុខងារទាញទិន្នន័យមកបង្ហាញ (Real-time Sync)
-useEffect(() => {
-  if (!user) return; // ឥឡូវវានឹងលែង Error ទៀតហើយ ព្រោះយើងមាន State user
-
-  // កំណត់ផ្លូវតាមលំដាប់ artifacts -> public -> data -> students
-  const q = query(
-    collection(db, 'program', 'digital-school', 'public', 'data', 'students'), 
-    orderBy('createdAt', 'desc')
-  );
-
-  const unsubscribe = onSnapshot(q, (snapshot) => {
-    setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-  }, (err) => console.error("Firestore Error:", err));
-
-  return () => unsubscribe();
-}, [user]);
-
-// ២. មុខងាររក្សាទុកទិន្នន័យ (Save Student)
-const handleSaveStudent = async () => {
-  if (!formData.name || !formData.studentId) return;
-  setIsSaving(true);
-  try {
-    // កំណត់ Path ឱ្យដូចគ្នាជាមួយកន្លែង Read ខាងលើ
-    const colRef = collection(db, 'program', appId, 'public', 'data', 'students'); 
-    
-    if (editingId) {
-      await updateDoc(doc(db, 'program', appId, 'public', 'data', 'students', editingId), formData);
-    } else {
-      await addDoc(colRef, { 
-        ...formData, 
-        createdAt: serverTimestamp() 
-      });
-    }
-    
-    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-    setIsModalOpen(false);
-    setEditingId(null);
-  } catch (e) { 
-    console.error("Save Error:", e); 
-  } finally {
-    setIsSaving(false);
-  }
-};
-
-// Helper function to generate correct paths (MANDATORY RULE for this environment)
-// ការកត់សម្គាល់៖ យើងត្រូវតែប្រើ Path នេះដើម្បីជៀសវាងបញ្ហា Permission Error ពី Firebase នៅក្នុងប្រព័ន្ធនេះ។
-const getStudentsCollectionPath = () => collection(db, 'program', appId, 'public', 'data', 'students');
-const getStudentDocPath = (id) => doc(db, 'program', appId, 'public', 'data', 'students', id);
+const db = getFirestore(app);
 
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
@@ -169,13 +106,16 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Closed by default on mobile
   const [showPassword, setShowPassword] = useState(false);
+  
+  // ១. ត្រូវប្រាកដថាមាន useState សម្រាប់ user
+  const [user, setUser] = useState(null);
 
   // Firestore Data
   const [students, setStudents] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({ studentId: '', name: '', gender: 'Male', grade: '' });
-  const [isSaving, setIsSaving] = useState(false); // Added loading state for saving
+  const [isSaving, setIsSaving] = useState(false);
 
   // Current Logged-in Student Data
   const [currentStudentData, setCurrentStudentData] = useState(null);
@@ -186,28 +126,7 @@ export default function App() {
 
   // Study View State
   const [studyView, setStudyView] = useState('main'); 
-  // បន្ថែម useState មួយនេះ
 
-// បន្ទាប់មកត្រូវប្រាកដថា useEffect សម្រាប់ Auth របស់អ្នកសរសេរបែបនេះ:
-useEffect(() => {
-  const initAuth = async () => {
-    try {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
-      } else {
-        await signInAnonymously(auth);
-      }
-    } catch (err) {
-      console.error("Auth Error:", err);
-    }
-  };
-  initAuth();
-  
-  // បន្ទាត់នេះនឹងយកទិន្នន័យ user ទៅដាក់ក្នុង State ខាងលើ
-  return onAuthStateChanged(auth, (currentUser) => {
-    setUser(currentUser);
-  });
-}, []);
   // Dummy Chart Data
   const lineData = [{name: 'មករា', pv: 300}, {name: 'កុម្ភៈ', pv: 600}, {name: 'មីនា', pv: 800}, {name: 'មេសា', pv: 500}, {name: 'ឧសភា', pv: 1100}, {name: 'មិថុនា', pv: 1400}];
   const pieData = [
@@ -231,36 +150,41 @@ useEffect(() => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // 1. Authentication Lifecycle
+  // ២. ត្រូវមាន useEffect សម្រាប់តាមដានការ Login
   useEffect(() => {
     const initAuth = async () => {
-      if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        try {
+      try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
-        } catch (error) {
-          console.error("Custom token mismatch, falling back to anonymous authentication.", error);
+        } else {
           await signInAnonymously(auth);
         }
-      } else {
-        await signInAnonymously(auth);
+      } catch (err) {
+        console.error("Auth Error:", err);
       }
     };
     initAuth();
-    return onAuthStateChanged(auth, setUser);
+    
+    // បន្ទាត់នេះនឹងកំណត់តម្លៃឱ្យ user state ខាងលើ
+    return onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+    });
   }, []);
 
-  // 2. Real-time Data Sync (កែពីកន្លែងដែលអ្នកបានស្នើសុំ)
+  // ៣. ទាញទិន្នន័យ (Query) ដោយប្រើ Path ជាក់លាក់
   useEffect(() => {
-    if (!user) return;
-    
-    // កែត្រង់នេះ៖ ប្រើ Path តាមរចនាសម្ព័ន្ធរបស់ប្រព័ន្ធ ប៉ុន្តែកូដខ្លីនិងស្រួលមើល
-    // ការប្រើប្រាស់ collection(db, 'students') ដោយផ្ទាល់នឹងមិនដំណើរការទេ ដូច្នេះយើងប្រើ Helper Function ជាជម្រើសល្អបំផុត
-    const q = query(getStudentsCollectionPath(), orderBy('createdAt', 'desc'));
-    
+    if (!user) return; // ឥឡូវវានឹងលែង Error ទៀតហើយ
+
+    // កំណត់ផ្លូវតាមលំដាប់ដែលអ្នកចង់បាន
+    const q = query(
+      collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'), 
+      orderBy('createdAt', 'desc')
+    );
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => console.error("Firestore Error:", err));
-    
+
     return () => unsubscribe();
   }, [user]);
 
@@ -271,7 +195,6 @@ useEffect(() => {
     if (window.innerWidth < 768) setIsSidebarOpen(false); // Auto close sidebar on mobile
   };
 
-  // កែសម្រួលមុខងារ Login (ផ្អែកតាមសំណើរបស់អ្នក)
   const handleLoginSubmit = () => {
     setLoginError(''); 
     
@@ -289,8 +212,6 @@ useEffect(() => {
         return;
       }
       
-      // មុខងារនេះដំណើរការដូចគ្នានឹងការទាញទិន្នន័យ (Query where) ដែលអ្នកបានស្នើសុំ
-      // យើងទាញចេញពី State ផ្ទាល់ ព្រោះទិន្នន័យមានស្រាប់ (Real-time sync) ដែលធ្វើឲ្យលឿនជាងការ query ថ្មី
       const foundStudent = students.find(s => 
         (s.studentId === userIdInput && s.name === passwordInput) ||
         (s.name === userIdInput && s.studentId === passwordInput)
@@ -323,40 +244,43 @@ useEffect(() => {
     setShowProfileDropdown(false);
   };
 
-  // កែសម្រួលមុខងារ Save Student (តាមសំណើរបស់អ្នក ដោយប្រើ Helper Function ដើម្បីចៀសវាង Permission Error)
+  // ៤. មុខងារបញ្ជូល និងកែប្រែទិន្នន័យ
   const handleSaveStudent = async () => {
-  if (!formData.name || !formData.studentId) return;
-  setIsSaving(true);
-  try {
-    // ត្រូវប្រើ Path ខ្លី 'students' ដូចក្នុង useEffect ទាញទិន្នន័យដែរ
-    const colRef = collection(db, 'program'); 
-    
-    await addDoc(colRef, { 
-      ...formData, 
-      createdAt: serverTimestamp() 
-    });
+    if (!formData.name || !formData.studentId) return;
+    setIsSaving(true);
+    try {
+      // កំណត់ផ្លូវឱ្យដូចគ្នាបេះបិទជាមួយកន្លែងទាញទិន្នន័យខាងលើ
+      const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'); 
+      
+      if (editingId) {
+        await updateDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', editingId), formData);
+      } else {
+        await addDoc(colRef, { 
+          ...formData, 
+          createdAt: serverTimestamp() 
+        });
+      }
+      
+      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+      setIsModalOpen(false);
+      setEditingId(null);
+    } catch (e) { 
+      console.error("Save Error:", e); 
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
-    // បិទ Modal និង Clear form
-    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-    setIsModalOpen(false);
-  } catch (e) { 
-    console.error("Save Error:", e); // បើនៅតែអត់ដើរ មើល Error ក្នុង Console ត្រង់នេះ
-  } finally {
-    setIsSaving(false);
-  }
-};
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
     setEditingId(std.id);
     setIsModalOpen(true);
   };
 
-  // កែសម្រួលមុខងារ Delete (តាមសំណើរបស់អ្នក ដោយប្រើ Helper Function ដើម្បីចៀសវាង Permission Error)
   const handleDelete = async (id) => {
     if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
       try {
-        // ប្រើ Path ដែលបានកំណត់
-        await deleteDoc(getStudentDocPath(id));
+        await deleteDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', id));
       } catch (error) {
         console.error("Delete Error:", error);
       }
