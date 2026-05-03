@@ -13,9 +13,7 @@ import {
   Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, ArrowLeft, Download, Mic
 } from 'lucide-react';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
+
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
 
 // Helper function to generate correct paths (MANDATORY RULE for this environment)
