@@ -241,25 +241,26 @@ export default function App() {
   if (!formData.name || !formData.studentId) return;
   setIsSaving(true);
   try {
-    // កែត្រង់នេះ៖ ប្រើតែ collection ឈ្មោះ 'students' ឱ្យដូចកន្លែងទាញទិន្នន័យ (onSnapshot)
+    // កែត្រង់នេះ៖ ប្រើតែ 'students' ឱ្យដូចកន្លែងទាញទិន្នន័យ (Query)
     const colRef = collection(db, 'students'); 
     
     if (editingId) {
-      // កែត្រង់នេះដែរ៖ Path ត្រូវតែខ្លីដូចគ្នា
+      // ប្រើ Path ខ្លីដូចគ្នា
       await updateDoc(doc(db, 'students', editingId), formData);
     } else {
+      // បញ្ចូលទៅក្នុង Collection 'students'
       await addDoc(colRef, { 
         ...formData, 
         createdAt: serverTimestamp() 
       });
     }
     
+    // បន្ទាប់ពី Save ជោគជ័យ វានឹងលោតបង្ហាញក្នុង Web ភ្លាម ព្រោះមាន onSnapshot
     setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
     setEditingId(null);
     setIsModalOpen(false);
   } catch (e) { 
     console.error("Save Error:", e); 
-    alert("មានបញ្ហាក្នុងការរក្សាទុក!");
   } finally {
     setIsSaving(false);
   }
