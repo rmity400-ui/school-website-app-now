@@ -1,5 +1,8 @@
 
-import { app } from './firebaseConfig'; //
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
+
 const firebaseConfig = {
   apiKey: "AIzaSyBGExtb5ZiemY3wWpWj_fbp5rp6BbaDbcc",
   authDomain: "school-app-36954.firebaseapp.com",
@@ -10,4 +13,10 @@ const firebaseConfig = {
   appId: "1:449537720077:web:e206b310294713276a7a44",
   measurementId: "G-BBCLLG82HD"
 };
-const app = initializeApp(firebaseConfig)
+
+const app = initializeApp(firebaseConfig);
+
+// បង្កើត instances រួច export វា
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+export default app;
