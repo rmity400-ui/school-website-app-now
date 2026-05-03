@@ -285,7 +285,7 @@ export default function App() {
       createdAt: serverTimestamp()
     });
 
-    alert("រក្សាទុកជោគជ័យ! ឥឡូវសិស្សអាចប្រើ ID នេះ Login បានហើយ");
+    //alert("រក្សាទុកជោគជ័យ! ឥឡូវសិស្សអាចប្រើ ID នេះ Login បានហើយ");
     setIsModalOpen(false);
   } catch (error) {
     console.error("Firebase Error:", error);
@@ -301,7 +301,7 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
+    //if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
       try {
         await deleteDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', id));
       } catch (error) {
@@ -330,7 +330,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-white tracking-wide leading-tight">វិទ្យាល័យស្ដៅសន្តិភាព</h1>
-              <p className="text-[11px] text-gray-300 font-medium">Sdao Santepheap High School</p>
+              <p className="text-[11px] text-gray-300 font-medium">SDS Santepheap High School</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center w-full md:w-auto">
@@ -414,8 +414,8 @@ export default function App() {
           </div>
           
           <div className="text-center mt-8 space-y-2 opacity-80 animate-in fade-in duration-1000 px-4">
-             <p className="text-[13px] sm:text-[14px] font-bold text-gray-300">Login Admin & Student VMC</p>
-             <p className="text-xs text-blue-400 font-medium">ស្ម័គ្រចិត្ត វិទ្យាល័យស្ដៅសន្តិភាព ខេត្តបាត់ដំបង</p>
+             <p className="text-[13px] sm:text-[14px] font-bold text-gray-300">Login Admin & Student GEN Z</p>
+             <p className="text-xs text-blue-400 font-medium">រៀបចំដោយយុវជនស្ម័គ្រចិត្ត VMC វិទ្យាល័យស្ដៅសន្តិភាព ខេត្តបាត់ដំបង</p>
              <p className="text-[10px] sm:text-[12px] tracking-widest uppercase mt-2 font-bold text-gray-500">Digital Transformation 2027</p>
           </div>
         </div>
