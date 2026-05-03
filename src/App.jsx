@@ -14,6 +14,26 @@ import {
 } from 'lucide-react';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
+
+// ២. កំណត់ Firebase Config (ប្រើ Environment Variables ដូចដែលយើងបានដាក់ក្នុង Vercel)
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// ៣. Initialize Firebase
+const app = initializeApp(firebaseConfig);
+// ៤. បង្កើត Variable auth និង db (កន្លែងនេះហើយដែលអ្នកកំពុងខ្វះ)
+const auth = getAuth(app); 
+const db = getFirestore(app);
+
+// បន្ទាប់ពីនេះ ទើបអ្នកអាចប្រើ auth និង db នៅក្នុង useEffect ឬ Actions ផ្សេងៗបាន
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
 
 // Helper function to generate correct paths (MANDATORY RULE for this environment)
