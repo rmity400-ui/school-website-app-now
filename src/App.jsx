@@ -27,7 +27,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'cy-digital-school-2027';
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
 
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
@@ -173,7 +173,8 @@ export default function App() {
   // 2. Real-time Data Sync
   useEffect(() => {
     if (!user) return;
-    const q = query(collection(db, 'artifacts', appId, 'public', 'data', 'students'), orderBy('createdAt', 'desc'));
+    // កែពី Path វែងៗ មកប្រើត្រឹមតែ 'students' វិញ
+    const q = query(collection(db, 'students'), orderBy('createdAt', 'desc'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => console.error("Firestore Error:", err));
@@ -237,25 +238,32 @@ export default function App() {
   };
 
   const handleSaveStudent = async () => {
-    if (!formData.name || !formData.studentId) return;
-    setIsSaving(true);
-    try {
-      const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
-      if (editingId) {
-        await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', editingId), formData);
-      } else {
-        await addDoc(colRef, { ...formData, createdAt: serverTimestamp() });
-      }
-      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-      setEditingId(null);
-      setIsModalOpen(false);
-    } catch (e) { 
-      console.error(e); 
-    } finally {
-      setIsSaving(false);
+  if (!formData.name || !formData.studentId) return;
+  setIsSaving(true);
+  try {
+    // កែត្រង់នេះ៖ ប្រើតែ collection ឈ្មោះ 'students' ឱ្យដូចកន្លែងទាញទិន្នន័យ (onSnapshot)
+    const colRef = collection(db, 'students'); 
+    
+    if (editingId) {
+      // កែត្រង់នេះដែរ៖ Path ត្រូវតែខ្លីដូចគ្នា
+      await updateDoc(doc(db, 'students', editingId), formData);
+    } else {
+      await addDoc(colRef, { 
+        ...formData, 
+        createdAt: serverTimestamp() 
+      });
     }
-  };
-
+    
+    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+    setEditingId(null);
+    setIsModalOpen(false);
+  } catch (e) { 
+    console.error("Save Error:", e); 
+    alert("មានបញ្ហាក្នុងការរក្សាទុក!");
+  } finally {
+    setIsSaving(false);
+  }
+};
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
     setEditingId(std.id);
