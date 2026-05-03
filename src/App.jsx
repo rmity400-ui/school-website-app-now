@@ -1,6 +1,7 @@
 // 1. React Hooks
 import React, { useState, useEffect, useRef } from 'react';
-
+import { getAuth } from 'firebase/auth';
+import { app } from './firebaseConfig'; // ឬផ្លូវទៅកាន់ file config របស់អ្នក
 import { initializeApp } from 'firebase/app';
 import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 
@@ -39,6 +40,8 @@ const firebaseConfig = {
 };
 
 // បង្កើត Variable ឱ្យបានត្រឹមត្រូវតាមលំដាប់
+const auth = getAuth();
+const auth = getAuth(app); // បន្ថែមជួរនេះ ប្រសិនបើកូដខាងក្រោមត្រូវការប្រើពាក្យ 'auth'
 const app = initializeApp(firebaseConfig);
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
