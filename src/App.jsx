@@ -1,6 +1,6 @@
 // 1. React Hooks
 import React, { useState, useEffect, useRef } from 'react';
-
+import { auth, db } from "./firebase/firebaseConfig";
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 

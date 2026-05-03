@@ -2,7 +2,6 @@
 // ក្នុង file firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { auth, db } from "./firebaseConfig";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -16,6 +15,7 @@ const firebaseConfig = {
   measurementId: "G-BBCLLG82HD"
 };
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app); // ត្រូវមានពាក្យ export
-export const db = getFirestore(app); // ត្រូវមានពាក្យ export
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app); // ត្រូវតែមានពាក្យ export
+export const db = getFirestore(app); // ត្រូវតែមានពាក្យ export
