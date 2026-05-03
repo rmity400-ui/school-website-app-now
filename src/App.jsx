@@ -40,10 +40,6 @@ const firebaseConfig = {
 };
 
 // បង្កើត Variable ឱ្យបានត្រឹមត្រូវតាមលំដាប់
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
   const canvasRef = useRef(null);

@@ -15,6 +15,6 @@ const firebaseConfig = {
   measurementId: "G-BBCLLG82HD"
 };
 
-const app = initializeApp(firebaseConfig);
+export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app); // ត្រូវមានពាក្យ export
 export const db = getFirestore(app); // ត្រូវមានពាក្យ export
