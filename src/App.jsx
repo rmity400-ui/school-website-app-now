@@ -1,9 +1,8 @@
 // 1. React Hooks
 import React, { useState, useEffect, useRef } from 'react';
 
-// 2. Firebase Core & Auth (បញ្ចូលគ្នាឱ្យស្អាត)
 import { initializeApp } from 'firebase/app';
-import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 
 // 3. Firestore (បញ្ចូលគ្នា និងលុបកូដដែលជាន់គ្នា)
 import { 
@@ -41,9 +40,6 @@ const firebaseConfig = {
 
 // បង្កើត Variable ឱ្យបានត្រឹមត្រូវតាមលំដាប់
 const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
-
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
   const canvasRef = useRef(null);
@@ -291,31 +287,27 @@ export default function App() {
   };
 
   // ៤. មុខងារបញ្ជូល និងកែប្រែទិន្នន័យ
-  const handleSaveStudent = async () => {
-    if (!formData.name || !formData.studentId) return;
-    setIsSaving(true);
-    try {
-      // កំណត់ផ្លូវឱ្យដូចគ្នាបេះបិទជាមួយកន្លែងទាញទិន្នន័យខាងលើ
-      const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'); 
-      
-      if (editingId) {
-        await updateDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', editingId), formData);
-      } else {
-        await addDoc(colRef, { 
-          ...formData, 
-          createdAt: serverTimestamp() 
-        });
-      }
-      
-      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-      setIsModalOpen(false);
-      setEditingId(null);
-    } catch (e) { 
-      console.error("Save Error:", e); 
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const db = getFirestore(app);
+
+const handleSaveStudent = async (formData) => {
+  try {
+    // ២. ប្រើតែ Firestore ដើម្បីរក្សាទុក (លែងពាក់ព័ន្ធជាមួយ Auth ទៀតហើយ)
+    const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
+    
+    await addDoc(colRef, {
+      name: formData.name,
+      studentId: formData.studentId, // ID នេះសម្រាប់ឱ្យសិស្សប្រើ Login ពេលក្រោយ
+      gender: formData.gender,
+      grade: formData.grade,
+      createdAt: serverTimestamp()
+    });
+
+    alert("រក្សាទុកក្នុង Database ជោគជ័យ!");
+  } catch (error) {
+    console.error("Firestore Error:", error);
+    // បើ Error ត្រង់នេះ គឺមកពី Firebase Rules (Missing Permissions)
+  }
+};
 
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
