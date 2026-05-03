@@ -1,8 +1,9 @@
 
+// ក្នុង file firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-import { auth, db } from './firebaseConfig';
+
 const firebaseConfig = {
   apiKey: "AIzaSyBGExtb5ZiemY3wWpWj_fbp5rp6BbaDbcc",
   authDomain: "school-app-36954.firebaseapp.com",
@@ -15,8 +16,5 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
-// បង្កើត instances រួច export វា
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export default app;
+export const auth = getAuth(app); // ត្រូវមានពាក្យ export
+export const db = getFirestore(app); // ត្រូវមានពាក្យ export
