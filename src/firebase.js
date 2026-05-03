@@ -12,9 +12,3 @@ const firebaseConfig = {
   appId: "1:449537720077:web:e206b310294713276a7a44",
   measurementId: "G-BBCLLG82HD"
 };
-
-const app = initializeApp(firebaseConfig); 
-
-// --- ៣. បន្ទាប់មកទើបបង្កើត db និង auth ដោយប្រើ 'app' នោះ ---
-const db = getFirestore(app); 
-const auth = getAuth(app);

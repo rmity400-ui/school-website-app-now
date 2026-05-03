@@ -13,10 +13,26 @@ import {
   Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, ArrowLeft, Download, Mic
 } from 'lucide-react';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
+import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
-// --- Firebase Configuration ---
+// ១. បង្កើត Config
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+};
+
+// ២. បង្កើត App (ចំណុចដែលអ្នកកំពុង Error)
+const app = initializeApp(firebaseConfig); 
+// ៣.បង្កើត Service ផ្សេងៗដោយប្រើ app ខាងលើ
+const db = getFirestore(app); 
 const auth = getAuth(app);
-const db = getFirestore(app);
 
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
