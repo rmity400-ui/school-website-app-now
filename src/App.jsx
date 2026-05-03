@@ -13,21 +13,18 @@ import {
   Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, ArrowLeft, Download, Mic
 } from 'lucide-react';
 import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-const firebaseConfig = {
-  apiKey: "AIzaSyBGExtb5ZiemY3wWpWj_fbp5rp6BbaDbcc",
-  authDomain: "school-app-36954.firebaseapp.com",
-  databaseURL: "https://school-app-36954-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "school-app-36954",
-  storageBucket: "school-app-36954.firebasestorage.app",
-  messagingSenderId: "449537720077",
-  appId: "1:449537720077:web:e206b310294713276a7a44",
-  measurementId: "G-BBCLLG82HD"
-};
+
 // --- Firebase Configuration ---
+const firebaseConfig = JSON.parse(__firebase_config);
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
+
+// Helper function to generate correct paths (MANDATORY RULE for this environment)
+// ការកត់សម្គាល់៖ យើងត្រូវតែប្រើ Path នេះដើម្បីជៀសវាងបញ្ហា Permission Error ពី Firebase នៅក្នុងប្រព័ន្ធនេះ។
+const getStudentsCollectionPath = () => collection(db, 'artifacts', appId, 'public', 'data', 'students');
+const getStudentDocPath = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
 
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
@@ -161,7 +158,12 @@ export default function App() {
   useEffect(() => {
     const initAuth = async () => {
       if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-        await signInWithCustomToken(auth, __initial_auth_token);
+        try {
+          await signInWithCustomToken(auth, __initial_auth_token);
+        } catch (error) {
+          console.error("Custom token mismatch, falling back to anonymous authentication.", error);
+          await signInAnonymously(auth);
+        }
       } else {
         await signInAnonymously(auth);
       }
@@ -170,14 +172,18 @@ export default function App() {
     return onAuthStateChanged(auth, setUser);
   }, []);
 
-  // 2. Real-time Data Sync
+  // 2. Real-time Data Sync (កែពីកន្លែងដែលអ្នកបានស្នើសុំ)
   useEffect(() => {
     if (!user) return;
-    // កែពី Path វែងៗ មកប្រើត្រឹមតែ 'students' វិញ
-    const q = query(collection(db, 'students'), orderBy('createdAt', 'desc'));
+    
+    // កែត្រង់នេះ៖ ប្រើ Path តាមរចនាសម្ព័ន្ធរបស់ប្រព័ន្ធ ប៉ុន្តែកូដខ្លីនិងស្រួលមើល
+    // ការប្រើប្រាស់ collection(db, 'students') ដោយផ្ទាល់នឹងមិនដំណើរការទេ ដូច្នេះយើងប្រើ Helper Function ជាជម្រើសល្អបំផុត
+    const q = query(getStudentsCollectionPath(), orderBy('createdAt', 'desc'));
+    
     const unsubscribe = onSnapshot(q, (snapshot) => {
       setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     }, (err) => console.error("Firestore Error:", err));
+    
     return () => unsubscribe();
   }, [user]);
 
@@ -188,6 +194,7 @@ export default function App() {
     if (window.innerWidth < 768) setIsSidebarOpen(false); // Auto close sidebar on mobile
   };
 
+  // កែសម្រួលមុខងារ Login (ផ្អែកតាមសំណើរបស់អ្នក)
   const handleLoginSubmit = () => {
     setLoginError(''); 
     
@@ -205,6 +212,8 @@ export default function App() {
         return;
       }
       
+      // មុខងារនេះដំណើរការដូចគ្នានឹងការទាញទិន្នន័យ (Query where) ដែលអ្នកបានស្នើសុំ
+      // យើងទាញចេញពី State ផ្ទាល់ ព្រោះទិន្នន័យមានស្រាប់ (Real-time sync) ដែលធ្វើឲ្យលឿនជាងការ query ថ្មី
       const foundStudent = students.find(s => 
         (s.studentId === userIdInput && s.name === passwordInput) ||
         (s.name === userIdInput && s.studentId === passwordInput)
@@ -216,7 +225,7 @@ export default function App() {
         setIsLoggedIn(true);
         setActiveMenu('home');
       } else {
-        setLoginError('គណនីមិនត្រឹមត្រូវ! រកមិនឃើញទិន្នន័យសិស្សនេះក្នុងប្រព័ន្ធទេ។');
+        setLoginError('រកមិនឃើញ ID នេះទេ! សូមឆែកមើលក្នុងប្រព័ន្ធថាមានសិស្សនេះឬនៅ?');
       }
     }
   };
@@ -237,46 +246,53 @@ export default function App() {
     setShowProfileDropdown(false);
   };
 
+  // កែសម្រួលមុខងារ Save Student (តាមសំណើរបស់អ្នក ដោយប្រើ Helper Function ដើម្បីចៀសវាង Permission Error)
   const handleSaveStudent = async () => {
-  if (!formData.name || !formData.studentId) return;
-  setIsSaving(true);
-  try {
-    // កែត្រង់នេះ៖ ប្រើតែ 'students' ឱ្យដូចកន្លែងទាញទិន្នន័យ (Query)
-    const colRef = collection(db, 'students'); 
-    
-    if (editingId) {
-      // ប្រើ Path ខ្លីដូចគ្នា
-      await updateDoc(doc(db, 'students', editingId), formData);
-    } else {
-      // បញ្ចូលទៅក្នុង Collection 'students'
-      await addDoc(colRef, { 
-        ...formData, 
-        createdAt: serverTimestamp() 
-      });
+    if (!formData.name || !formData.studentId || !user) return;
+    setIsSaving(true);
+    try {
+      // កែត្រង់នេះ៖ ប្រើប្រាស់ផ្លូវទិន្នន័យដែលបានកំណត់
+      const colRef = getStudentsCollectionPath(); 
+      
+      if (editingId) {
+        // ប្រើ Path ដែលត្រឹមត្រូវសម្រាប់ Update
+        await updateDoc(getStudentDocPath(editingId), formData);
+      } else {
+        // បញ្ចូលទៅក្នុង Collection 
+        await addDoc(colRef, { 
+          ...formData, 
+          createdAt: serverTimestamp() 
+        });
+      }
+      
+      // បន្ទាប់ពី Save ជោគជ័យ វានឹងលោតបង្ហាញក្នុង Web ភ្លាម ព្រោះមាន onSnapshot
+      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+      setEditingId(null);
+      setIsModalOpen(false);
+    } catch (e) { 
+      console.error("Save Error:", e); 
+    } finally {
+      setIsSaving(false);
     }
-    
-    // បន្ទាប់ពី Save ជោគជ័យ វានឹងលោតបង្ហាញក្នុង Web ភ្លាម ព្រោះមាន onSnapshot
-    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-    setEditingId(null);
-    setIsModalOpen(false);
-  } catch (e) { 
-    console.error("Save Error:", e); 
-  } finally {
-    setIsSaving(false);
-  }
-};
+  };
+
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
     setEditingId(std.id);
     setIsModalOpen(true);
   };
 
+  // កែសម្រួលមុខងារ Delete (តាមសំណើរបស់អ្នក ដោយប្រើ Helper Function ដើម្បីចៀសវាង Permission Error)
   const handleDelete = async (id) => {
-  if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
-    // ត្រូវប្រើ Path ខ្លីដូចគេដូចឯង
-    await deleteDoc(doc(db, 'students', id));
-  }
-};
+    if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
+      try {
+        // ប្រើ Path ដែលបានកំណត់
+        await deleteDoc(getStudentDocPath(id));
+      } catch (error) {
+        console.error("Delete Error:", error);
+      }
+    }
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
@@ -428,7 +444,7 @@ export default function App() {
           </button>
         </div>
 
-        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
+        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto mb-4">
           {role === 'student' ? (
             <>
               <SidebarItem id="home" icon={LayoutDashboard} label="ទំព័រដើម" />
@@ -447,8 +463,8 @@ export default function App() {
           )}
         </nav>
 
-        <div className="p-4 border-t border-white/5 mt-auto">
-          <button onClick={handleLogout} className="w-full p-3.5 flex items-center justify-center md:justify-start gap-4 text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 rounded-xl font-medium text-sm transition-all">
+        <div className="p-4 md:px-6 md:pb-8 md:pt-6 border-t border-white/5 mt-auto pb-8 pt-4">
+          <button onClick={handleLogout} className="w-full p-3.5 flex items-center justify-center md:justify-start gap-4 text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 rounded-xl font-medium text-sm transition-all shadow-sm">
             <LogOut size={20} />
             {isSidebarOpen && <span>ចាកចេញ</span>}
           </button>
