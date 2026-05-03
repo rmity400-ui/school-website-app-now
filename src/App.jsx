@@ -1,6 +1,6 @@
 // 1. React Hooks
 import React, { useState, useEffect, useRef } from 'react';
-
+import { auth, db } from "./firebaseConfig";
 // 2. Firebase Core & Auth (បញ្ចូលគ្នាឱ្យស្អាត)
 import { initializeApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
@@ -269,31 +269,16 @@ export default function App() {
   };
 
   // ៤. មុខងារបញ្ជូល និងកែប្រែទិន្នន័យ
-  const handleSaveStudent = async () => {
-    if (!formData.name || !formData.studentId) return;
-    setIsSaving(true);
-    try {
-      // កំណត់ផ្លូវឱ្យដូចគ្នាបេះបិទជាមួយកន្លែងទាញទិន្នន័យខាងលើ
-      const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'); 
-      
-      if (editingId) {
-        await updateDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', editingId), formData);
-      } else {
-        await addDoc(colRef, { 
-          ...formData, 
-          createdAt: serverTimestamp() 
-        });
-      }
-      
-      setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
-      setIsModalOpen(false);
-      setEditingId(null);
-    } catch (e) { 
-      console.error("Save Error:", e); 
-    } finally {
-      setIsSaving(false);
-    }
-  };
+  const handleSaveStudent = async (formData) => {
+  try {
+    // ប្រើតែ Firestore (db) បានហើយ កុំប្រើ auth.createUser...
+    const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
+    await addDoc(colRef, { ...formData, createdAt: serverTimestamp() });
+    alert("ជោគជ័យ!");
+  } catch (error) {
+    console.error("Error:", error);
+  }
+};
 
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
