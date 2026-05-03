@@ -3,7 +3,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
-
+import { auth, db } from "./firebaseConfig";
 const firebaseConfig = {
   apiKey: "AIzaSyBGExtb5ZiemY3wWpWj_fbp5rp6BbaDbcc",
   authDomain: "school-app-36954.firebaseapp.com",
