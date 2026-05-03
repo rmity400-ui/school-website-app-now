@@ -31,12 +31,56 @@ const db = getFirestore(app); // បើខ្វះបន្ទាត់នេ�
 const auth = getAuth(app);
 
 // បន្ទាប់ពីនេះ ទើបអ្នកអាចប្រើ auth និង db នៅក្នុង useEffect ឬ Actions ផ្សេងៗបាន
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'school-website-app-2027';
+// ប្រកាស appId នៅខាងលើគេបង្អស់
+const appId = "digital-school"; // អ្នកអាចប្តូរឈ្មោះតាមចិត្ត
+
+// ១. មុខងារទាញទិន្នន័យមកបង្ហាញ (Real-time Sync)
+useEffect(() => {
+  if (!user) return;
+  // កែ Path មកជា artifacts -> appId -> public -> data -> students
+  const q = query(
+    collection(db, 'artifacts', appId, 'public', 'data', 'students'), 
+    orderBy('createdAt', 'desc')
+  );
+  
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    setStudents(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+  }, (err) => console.error("Firestore Error:", err));
+  
+  return () => unsubscribe();
+}, [user]);
+
+// ២. មុខងាររក្សាទុកទិន្នន័យ (Save Student)
+const handleSaveStudent = async () => {
+  if (!formData.name || !formData.studentId) return;
+  setIsSaving(true);
+  try {
+    // កំណត់ Path ឱ្យដូចគ្នាជាមួយកន្លែង Read ខាងលើ
+    const colRef = collection(db, 'program', appId, 'public', 'data', 'students'); 
+    
+    if (editingId) {
+      await updateDoc(doc(db, 'program', appId, 'public', 'data', 'students', editingId), formData);
+    } else {
+      await addDoc(colRef, { 
+        ...formData, 
+        createdAt: serverTimestamp() 
+      });
+    }
+    
+    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+    setIsModalOpen(false);
+    setEditingId(null);
+  } catch (e) { 
+    console.error("Save Error:", e); 
+  } finally {
+    setIsSaving(false);
+  }
+};
 
 // Helper function to generate correct paths (MANDATORY RULE for this environment)
 // ការកត់សម្គាល់៖ យើងត្រូវតែប្រើ Path នេះដើម្បីជៀសវាងបញ្ហា Permission Error ពី Firebase នៅក្នុងប្រព័ន្ធនេះ។
-const getStudentsCollectionPath = () => collection(db, 'artifacts', appId, 'public', 'data', 'students');
-const getStudentDocPath = (id) => doc(db, 'artifacts', appId, 'public', 'data', 'students', id);
+const getStudentsCollectionPath = () => collection(db, 'program', appId, 'public', 'data', 'students');
+const getStudentDocPath = (id) => doc(db, 'program', appId, 'public', 'data', 'students', id);
 
 // --- Animated Cyber Background ---
 const CyberBackground = () => {
@@ -264,7 +308,7 @@ export default function App() {
   setIsSaving(true);
   try {
     // ត្រូវប្រើ Path ខ្លី 'students' ដូចក្នុង useEffect ទាញទិន្នន័យដែរ
-    const colRef = collection(db, 'artifacts'); 
+    const colRef = collection(db, 'program'); 
     
     await addDoc(colRef, { 
       ...formData, 
