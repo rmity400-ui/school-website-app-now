@@ -2,6 +2,7 @@
 // ក្នុង file firebaseConfig.js
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
+import { auth, db } from "./firebaseConfig";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
