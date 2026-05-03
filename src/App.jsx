@@ -273,7 +273,7 @@ export default function App() {
 
   const handleDelete = async (id) => {
     if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
-      await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id));
+      await deleteDoc(doc(db, 'students', appId, 'public', 'data', 'students', id));
     }
   };
 
