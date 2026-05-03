@@ -264,7 +264,7 @@ export default function App() {
   setIsSaving(true);
   try {
     // ត្រូវប្រើ Path ខ្លី 'students' ដូចក្នុង useEffect ទាញទិន្នន័យដែរ
-    const colRef = collection(db, 'students'); 
+    const colRef = collection(db, 'artifacts'); 
     
     await addDoc(colRef, { 
       ...formData, 
