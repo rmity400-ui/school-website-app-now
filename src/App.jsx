@@ -169,7 +169,6 @@ export default function App() {
   const [activeMenu, setActiveMenu] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Closed by default on mobile
   const [showPassword, setShowPassword] = useState(false);
-  const [user, setUser] = useState(null);
 
   // Firestore Data
   const [students, setStudents] = useState([]);
@@ -188,7 +187,6 @@ export default function App() {
   // Study View State
   const [studyView, setStudyView] = useState('main'); 
   // បន្ថែម useState មួយនេះ
-  const [user, setUser] = useState(null); 
 
 // បន្ទាប់មកត្រូវប្រាកដថា useEffect សម្រាប់ Auth របស់អ្នកសរសេរបែបនេះ:
 useEffect(() => {
