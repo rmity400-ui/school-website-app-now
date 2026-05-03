@@ -1,23 +1,34 @@
+// 1. React Hooks
 import React, { useState, useEffect, useRef } from 'react';
+
+// 2. Firebase Core & Auth (បញ្ចូលគ្នាឱ្យស្អាត)
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from 'firebase/auth';
+import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
+
+// 3. Firestore (បញ្ចូលគ្នា និងលុបកូដដែលជាន់គ្នា)
 import { 
   getFirestore, collection, doc, onSnapshot, query, 
   serverTimestamp, addDoc, deleteDoc, updateDoc, orderBy 
 } from 'firebase/firestore';
+
+// 4. Icons (Lucide React)
 import { 
   LayoutDashboard, Users, Settings, LogOut, Menu, ShieldCheck, 
   User, Lock, Eye, EyeOff, LogIn, Plus, Trash2, Edit2, Send, 
   MessageCircle, Bell, ChevronDown, BookOpen, GraduationCap,
   TrendingUp, Award, UserCircle, Search, X, CheckCircle, 
-  Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, ArrowLeft, Download, Mic
+  Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, 
+  ArrowLeft, Download, Mic
 } from 'lucide-react';
-import { LineChart, Line, XAxis, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
-import { initializeApp } from "firebase/app";
-import { getFirestore, collection, addDoc, serverTimestamp, query, orderBy, onSnapshot } from "firebase/firestore";
-import { getAuth, onAuthStateChanged, signInAnonymously } from "firebase/auth";
 
-// ១. បង្កើត Config
+// 5. Charts (Recharts)
+import { 
+  LineChart, Line, XAxis, Tooltip, ResponsiveContainer, 
+  PieChart, Pie, Cell 
+} from 'recharts';
+
+// --- ចាប់ផ្ដើមការកំណត់ Firebase (Global Scope) ---
+
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
@@ -28,10 +39,9 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// ២. បង្កើត App (ចំណុចដែលអ្នកកំពុង Error)
-const app = initializeApp(firebaseConfig); 
-// ៣.បង្កើត Service ផ្សេងៗដោយប្រើ app ខាងលើ
-const db = getFirestore(app); 
+// បង្កើត Variable ឱ្យបានត្រឹមត្រូវតាមលំដាប់
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
 const auth = getAuth(app);
 
 // --- Animated Cyber Background ---
