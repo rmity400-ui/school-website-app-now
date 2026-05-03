@@ -251,7 +251,29 @@ export default function App() {
       }
     }
   };
+​​​​​​  ​​  const handleAddStudent = async (studentData) => {
+  try {
+    // ផ្លូវ (Path) នេះត្រូវតែដូចគ្នាបេះបិទទៅនឹងកន្លែងដែលអ្នក Query ទាញទិន្នន័យមកបង្ហាញ
+    const studentRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
+    
+    await addDoc(studentRef, {
+      name: studentData.name,
+      studentId: studentData.studentId, // ID ដែល Admin បញ្ចូលឱ្យសិស្ស
+      gender: studentData.gender,
+      grade: studentData.grade,
+      createdAt: serverTimestamp() // ដាក់ពេលវេលាដែលបានបញ្ចូល
+    });
 
+    alert("បញ្ចូលទិន្នន័យសិស្សបានជោគជ័យ!");
+    
+    // ប្រសិនបើអ្នកមាន Function សម្រាប់ទាញទិន្នន័យថ្មី អ្នកអាចហៅវានៅទីនេះ
+    // fetchStudents(); 
+
+  } catch (error) {
+    console.error("Save Error:", error);
+    alert("មានបញ្ហាក្នុងការរក្សាទុក៖ " + error.message);
+  }
+};
   const switchLoginType = (type) => {
     setLoginType(type);
     setUserIdInput('');
