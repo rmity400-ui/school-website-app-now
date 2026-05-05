@@ -270,29 +270,34 @@ export default function App() {
 
   // ៤. មុខងារបញ្ជូល និងកែប្រែទិន្នន័យ
   const handleSaveStudent = async (data) => {
-  if (!data.studentId) return alert("សូមបញ្ចូល ID សិស្ស");
-  
-  setIsSaving(true);
-  try {
-    const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
     
-    // បញ្ចូលទិន្នន័យទៅ Firestore
-    await addDoc(colRef, {
-      studentId: data.studentId,
-      name: data.name,
-      gender: data.gender,
-      grade: data.grade,
-      createdAt: serverTimestamp()
-    });
-
-    //alert("រក្សាទុកជោគជ័យ! ឥឡូវសិស្សអាចប្រើ ID នេះ Login បានហើយ");
-    setIsModalOpen(false);
-  } catch (error) {
-    console.error("Firebase Error:", error);
-  } finally {
-    setIsSaving(false);
-  }
-};
+    setIsSaving(true);
+    try {
+      const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
+      
+      if (editingId) {
+        // ប្រសិនបើជាការកែប្រែ (Update)
+        await updateDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', editingId), {
+          ...data,
+          updatedAt: serverTimestamp()
+        });
+        alert("កែប្រែជោគជ័យ!");
+      } else {
+        // ប្រសិនបើជាការបន្ថែមថ្មី (Add)
+        await addDoc(colRef, {
+          ...data,
+          createdAt: serverTimestamp()
+        });
+      }
+      
+      setIsModalOpen(false);
+      setEditingId(null);
+    } catch (error) {
+      console.error("Firebase Error:", error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleEdit = (std) => {
     setFormData({ studentId: std.studentId, name: std.name, gender: std.gender, grade: std.grade });
@@ -301,13 +306,13 @@ export default function App() {
   };
 
   const handleDelete = async (id) => {
-    //if (window.confirm("តើអ្នកប្រាកដថាចង់លុបសិស្សនេះមែនទេ?")) {
       try {
         await deleteDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', id));
       } catch (error) {
         console.error("Delete Error:", error);
       }
-};
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === 'Enter') {
       handleLoginSubmit();
@@ -328,7 +333,7 @@ export default function App() {
             </div>
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-white tracking-wide leading-tight">វិទ្យាល័យស្ដៅសន្តិភាព</h1>
-              <p className="text-[11px] text-gray-300 font-medium">SDS Santepheap High School</p>
+              <p className="text-[11px] text-gray-300 font-medium">Sdao Santepheap High School</p>
             </div>
           </div>
           <div className="flex items-center gap-2 sm:gap-4 flex-wrap justify-center w-full md:w-auto">
@@ -412,8 +417,8 @@ export default function App() {
           </div>
           
           <div className="text-center mt-8 space-y-2 opacity-80 animate-in fade-in duration-1000 px-4">
-             <p className="text-[13px] sm:text-[14px] font-bold text-gray-300">Login Admin & Student GEN Z</p>
-             <p className="text-xs text-blue-400 font-medium">រៀបចំដោយយុវជនស្ម័គ្រចិត្ត VMC វិទ្យាល័យស្ដៅសន្តិភាព ខេត្តបាត់ដំបង</p>
+             <p className="text-[13px] sm:text-[14px] font-bold text-gray-300">Login Admin & Student VMC</p>
+             <p className="text-xs text-blue-400 font-medium">ស្ម័គ្រចិត្ត វិទ្យាល័យស្ដៅសន្តិភាព ខេត្តបាត់ដំបង</p>
              <p className="text-[10px] sm:text-[12px] tracking-widest uppercase mt-2 font-bold text-gray-500">Digital Transformation 2027</p>
           </div>
         </div>
@@ -631,22 +636,23 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                    <div className="lg:col-span-2 bg-[#131C31] border border-white/5 p-4 md:p-6 rounded-2xl overflow-x-auto">
                       <h3 className="text-sm font-bold text-gray-300 mb-6">ស្ថិតិសិស្ស</h3>
-                      <div className="h-64 w-full min-w-[500px]">
-                         <ResponsiveContainer width="100%" height="100%">
-                           <LineChart data={lineData}>
-                             <XAxis dataKey="name" stroke="#475569" fontSize={12} tickLine={false} axisLine={false} />
-                             <Tooltip contentStyle={{background:'#0B1021', border:'1px solid rgba(255,255,255,0.1)', borderRadius:'8px'}} />
-                             <Line type="monotone" dataKey="pv" stroke="#00A3FF" strokeWidth={3} dot={{r: 4, fill: '#00A3FF'}} />
-                           </LineChart>
-                         </ResponsiveContainer>
-                      </div>
+                      // ជំនួសកន្លែងដែលអ្នកដាក់ ResponsiveContainer ដោយបន្ថែម height ឱ្យវាផ្ទាល់
+<div className="h-[300px] w-full"> {/* បន្ថែម class កំណត់ height នៅទីនេះ */}
+  <ResponsiveContainer width="100%" height="300">
+    <LineChart data={lineData}>
+      <XAxis dataKey="name" stroke="#475569" />
+      <Tooltip />
+      <Line type="monotone" dataKey="pv" stroke="#00A3FF" strokeWidth={3} />
+    </LineChart>
+  </ResponsiveContainer>
+</div>
                    </div>
                    <div className="bg-[#131C31] border border-white/5 p-6 rounded-2xl flex flex-col">
                       <h3 className="text-sm font-bold text-gray-300 mb-6">ការបែងចែកលទ្ធផល</h3>
                       <div className="flex-1 flex flex-col items-center justify-center">
                          <div className="h-40 w-full mb-4 relative flex items-center justify-center">
                            <PieChartIcon size={120} className="text-blue-500 opacity-20 absolute" />
-                           <ResponsiveContainer width="100%" height="100%">
+                           <ResponsiveContainer width="100%" height="300">
                               <PieChart>
                                  <Pie data={pieData} innerRadius={50} outerRadius={70} paddingAngle={5} dataKey="value">
                                    {pieData.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.color} />)}
