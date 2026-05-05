@@ -203,7 +203,10 @@ export default function App() {
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      console.log("ទិន្នន័យដែលទាញបាន៖", data); // ឆែកមើលក្នុង Console
+      if (import.meta.env.MODE === 'development') {
+  console.log("ទិន្នន័យដែលទាញបាន៖", data);
+}
+      //console.log("ទិន្នន័យដែលទាញបាន៖", data); // ឆែកមើលក្នុង Console
       setStudents(data);
     }, (err) => {
       console.error("Firestore Error:", err);
