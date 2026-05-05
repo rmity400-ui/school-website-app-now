@@ -639,7 +639,6 @@ export default function App() {
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
                    <div className="lg:col-span-2 bg-[#131C31] border border-white/5 p-4 md:p-6 rounded-2xl overflow-x-auto">
                       <h3 className="text-sm font-bold text-gray-300 mb-6">ស្ថិតិសិស្ស</h3>
-                      // ជំនួសកន្លែងដែលអ្នកដាក់ ResponsiveContainer ដោយបន្ថែម height ឱ្យវាផ្ទាល់
 <div className="h-[300px] w-full"> {/* បន្ថែម class កំណត់ height នៅទីនេះ */}
   <ResponsiveContainer width="100%" height="300">
     <LineChart data={lineData}>
