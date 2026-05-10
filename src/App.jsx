@@ -3,7 +3,7 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth, onAuthStateChanged, signInAnonymously, signInWithCustomToken } from 'firebase/auth';
 import { 
   getFirestore, collection, doc, onSnapshot, query, 
-  serverTimestamp, addDoc, deleteDoc, updateDoc, orderBy, writeBatch 
+  serverTimestamp, addDoc, deleteDoc, updateDoc, writeBatch 
 } from 'firebase/firestore';
 import { 
   LayoutDashboard, Users, Settings, LogOut, Menu, ShieldCheck, 
@@ -12,31 +12,33 @@ import {
   TrendingUp, Award, UserCircle, Search, X, CheckCircle, 
   Megaphone, PieChart as PieChartIcon, AlertCircle, Cpu, FileText, 
   ArrowLeft, Download, Mic, Paperclip, ImageIcon, FileSpreadsheet,
-  Moon, Sun, BellOff, PlayCircle, Camera, CheckSquare, Clock
+  Moon, Sun, BellOff, PlayCircle, Camera, CheckSquare, Clock, ArrowRight, Loader
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, Tooltip, ResponsiveContainer, 
   PieChart, Pie, Cell 
 } from 'recharts';
 
-let rawConfig = typeof window !== 'undefined' && window.__firebase_config 
-  ? window.__firebase_config 
-  : (typeof __firebase_config !== 'undefined' ? __firebase_config : {});
-
-// បង្កើត Object ថ្មី (Clone) ដើម្បីចៀសវាងបញ្ហា Error ពេលកែប្រែ Frozen Object
-let firebaseConfig = { 
-  ...rawConfig,
-  projectId: rawConfig.projectId || "dummy-project",
-  appId: rawConfig.appId || "1:1234567890:web:abcdef123456"
+// រៀបចំការកំណត់ Firebase ប្រកបដោយសុវត្ថិភាព
+let firebaseConfigObj = {
+  apiKey: "AIzaSyDummyKeyForLocalDev1234567890",
+  projectId: "dummy-project",
+  appId: "1:123456789:web:abcdef"
 };
 
-// ធានាថា apiKey ត្រូវតែចាប់ផ្តើមដោយ AIza និងមានប្រវែងត្រឹមត្រូវ (គ្មានសញ្ញាពិសេសខុសស្តង់ដារ) ដើម្បីឆ្លងផុតការត្រួតពិនិត្យរបស់ Firebase 
-if (!firebaseConfig.apiKey || typeof firebaseConfig.apiKey !== 'string' || !firebaseConfig.apiKey.startsWith('AIza')) {
-  firebaseConfig.apiKey = "AIzaSyB1234567890abcdefghijklmnopqrstuv";
+try {
+  if (typeof __firebase_config !== 'undefined') {
+    firebaseConfigObj = typeof __firebase_config === 'string' ? JSON.parse(__firebase_config) : __firebase_config;
+  }
+} catch (error) {
+  console.warn("ប្រើប្រាស់ Dummy Config ដោយសារមានបញ្ហាក្នុងការទាញយក Firebase Config ពិតប្រាកដ។");
 }
 
-// ប្រើប្រាស់ getApps() ដើម្បីការពារកុំឲ្យ Error "App already exists" ពេលកម្មវិធី Reload
-const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+if (!firebaseConfigObj.apiKey || typeof firebaseConfigObj.apiKey !== 'string' || !firebaseConfigObj.apiKey.startsWith('AIza')) {
+  firebaseConfigObj.apiKey = "AIzaSyDummyKeyForLocalDev1234567890";
+}
+
+const app = getApps().length === 0 ? initializeApp(firebaseConfigObj) : getApp();
 const auth = getAuth(app);
 const db = getFirestore(app);
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'digital-school';
@@ -113,14 +115,20 @@ const CyberBackground = () => {
 };
 
 export default function App() {
+  useEffect(() => {
+    const link = document.createElement('link');
+    link.href = 'https://fonts.googleapis.com/css2?family=Siemreap&display=swap';
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }, []);
+
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [loginType, setLoginType] = useState('student'); // student | admin | guest
+  const [loginType, setLoginType] = useState('student'); 
   const [role, setRole] = useState(null); 
   
   const [userIdInput, setUserIdInput] = useState('');
   const [passwordInput, setPasswordInput] = useState('');
   const [loginError, setLoginError] = useState('');
-  const [rememberMe, setRememberMe] = useState(false); 
 
   const [activeMenu, setActiveMenu] = useState('home');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -138,7 +146,6 @@ export default function App() {
   const [showProfileDropdown, setShowProfileDropdown] = useState(false);
   const [studyView, setStudyView] = useState('main'); 
 
-  // States សម្រាប់ការកំណត់ និងប្រព័ន្ធសារ
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [muteNotifications, setMuteNotifications] = useState(false);
   const [adminProfileName, setAdminProfileName] = useState('Admin ICT');
@@ -147,16 +154,18 @@ export default function App() {
   const fileInputRef = useRef(null);
   const excelInputRef = useRef(null);
   
-  const [notifTab, setNotifTab] = useState('new'); // 'new' | 'history'
+  const [notifTab, setNotifTab] = useState('new'); 
   const [notifications, setNotifications] = useState([
     { id: 1, title: 'កាលវិភាគប្រឡង', desc: 'សូមពិនិត្យកាលវិភាគប្រឡងប្រចាំខែថ្មី...', time: '១០ នាទីមុន', isNew: true },
     { id: 2, title: 'មេរៀនថ្មី (Arduino)', desc: 'មេរៀនមូលដ្ឋានគ្រឹះ Arduino ត្រូវបានបន្ថែម។', time: '១ ម៉ោងមុន', isNew: false }
   ]);
 
   const [arduinoProgress, setArduinoProgress] = useState(0); 
-
   const [customProfileImage, setCustomProfileImage] = useState(null);
   const profilePicInputRef = useRef(null);
+  
+  const [alertInfo, setAlertInfo] = useState({ show: false, message: '' });
+  const [confirmInfo, setConfirmInfo] = useState({ show: false, message: '', onConfirm: null });
 
   const lineData = [{name: 'មករា', pv: 300}, {name: 'កុម្ភៈ', pv: 600}, {name: 'មីនា', pv: 800}, {name: 'មេសា', pv: 500}, {name: 'ឧសភា', pv: 1100}, {name: 'មិថុនា', pv: 1400}];
   const pieData = [
@@ -166,23 +175,28 @@ export default function App() {
     { name: 'ត្រូវកែលម្អ', value: 5, color: '#FF5252' }
   ];
 
-  // ត្រួតពិនិត្យការចងចាំរាល់ពេលបើកកម្មវិធី
   useEffect(() => {
-    const savedLogin = localStorage.getItem('schoolSavedLogin');
-    if (savedLogin) {
+    const activeSession = localStorage.getItem('activeDigitalSchoolSession');
+    if (activeSession) {
       try {
-        const data = JSON.parse(savedLogin);
-        if (data.type !== 'guest') { 
-          setLoginType(data.type);
-          setUserIdInput(data.id);
-          setPasswordInput(data.pass);
-          setRememberMe(true);
+        const sessionData = JSON.parse(activeSession);
+        setRole(sessionData.role);
+        setLoginType(sessionData.loginType);
+        
+        if (sessionData.role === 'student') {
+          setCurrentStudentData(sessionData.studentData);
+          setActiveMenu('home'); 
+        } else if (sessionData.role === 'admin') {
+          setActiveMenu('home');
         }
-      } catch(e) {}
+        
+        setIsLoggedIn(true); 
+      } catch(e) {
+        console.error("Session parse error");
+      }
     }
   }, []);
 
-  // ទាញយករូបភាព Profile និង Progress ពី LocalStorage ពេល Login ចូល
   useEffect(() => {
     if (isLoggedIn && role === 'student' && currentStudentData) {
       const savedImage = localStorage.getItem(`profile_image_${currentStudentData.studentId}`);
@@ -206,28 +220,31 @@ export default function App() {
 
   useEffect(() => {
     const initAuth = async () => {
-      if (firebaseConfig.apiKey === "AIzaSyB1234567890abcdefghijklmnopqrstuv" || firebaseConfig.projectId === "dummy-project") {
-        return;
-      }
+      if (firebaseConfigObj.apiKey.includes("Dummy")) return; 
       try {
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
           await signInWithCustomToken(auth, __initial_auth_token);
         } else {
           await signInAnonymously(auth);
         }
-      } catch (err) {}
+      } catch (err) {
+        console.warn('Auth Info:', err.message);
+      }
     };
     initAuth();
-    return onAuthStateChanged(auth, (currentUser) => { setUser(currentUser); });
+    const unsub = onAuthStateChanged(auth, (currentUser) => { setUser(currentUser); });
+    return () => unsub();
   }, []);
 
   useEffect(() => {
+    if (!user) return; 
+
     const q = query(
-      collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'), 
-      orderBy('createdAt', 'desc')
+      collection(db, 'artifacts', appId, 'public', 'data', 'students')
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      data.sort((a, b) => (b.createdAt?.toMillis() || 0) - (a.createdAt?.toMillis() || 0));
       setStudents(data);
     }, (err) => {
       console.error("Firestore Error:", err);
@@ -236,28 +253,53 @@ export default function App() {
     return () => unsubscribe();
   }, [user]);
 
+  const showAlert = (message) => {
+    setAlertInfo({ show: true, message });
+  };
+
+  const showConfirm = (message, onConfirm) => {
+    setConfirmInfo({ show: true, message, onConfirm });
+  };
+
   const handleMenuClick = (id) => {
     setActiveMenu(id);
     if (id === 'study') setStudyView('main');
     if (window.innerWidth < 768) setIsSidebarOpen(false);
   };
 
+  const handleBack = () => {
+    if (activeMenu === 'study' && studyView !== 'main') {
+      if (studyView === 'arduino_learning') setStudyView('arduino');
+      else if (studyView === 'arduino') setStudyView('softskills');
+      else setStudyView('main');
+    } else {
+      setActiveMenu('home');
+      setStudyView('main');
+    }
+  };
+
   const handleLoginSubmit = () => {
     setLoginError(''); 
     let isSuccess = false;
+    let foundStudentData = null;
+    let currentRole = null;
 
     if (loginType === 'guest') {
       if (userIdInput === '-215') {
-        setRole('student');
-        setCurrentStudentData({ studentId: 'GUEST-215', name: 'Guest User', gender: 'N/A', grade: 'N/A' });
+        currentRole = 'student';
+        foundStudentData = { studentId: 'GUEST-215', name: 'Guest User', gender: 'N/A', grade: 'N/A' };
+        setRole(currentRole);
+        setCurrentStudentData(foundStudentData);
         setIsLoggedIn(true);
         setActiveMenu('study'); 
+        isSuccess = true; 
       } else {
         setLoginError('កូដ Guest មិនត្រឹមត្រូវទេ! (សូមវាយ: -215)');
       }
     } else if (loginType === 'admin') {
       if (userIdInput === 'ict' && passwordInput === 'ict168') {
-        setRole('admin');
+        currentRole = 'admin';
+        setRole(currentRole);
         setIsLoggedIn(true);
         setActiveMenu('home');
         isSuccess = true;
@@ -276,8 +318,10 @@ export default function App() {
       );
 
       if (foundStudent) {
-        setRole('student');
-        setCurrentStudentData(foundStudent); 
+        currentRole = 'student';
+        foundStudentData = foundStudent;
+        setRole(currentRole);
+        setCurrentStudentData(foundStudentData); 
         setIsLoggedIn(true);
         setActiveMenu('home');
         isSuccess = true;
@@ -286,30 +330,20 @@ export default function App() {
       }
     }
 
-    if (isSuccess && rememberMe && loginType !== 'guest') {
-      localStorage.setItem('schoolSavedLogin', JSON.stringify({ type: loginType, id: userIdInput, pass: passwordInput }));
-    } else if (!rememberMe) {
-      localStorage.removeItem('schoolSavedLogin');
+    if (isSuccess && loginType !== 'guest') {
+      const sessionObj = {
+        role: currentRole,
+        loginType: loginType,
+        studentData: foundStudentData
+      };
+      localStorage.setItem('activeDigitalSchoolSession', JSON.stringify(sessionObj));
     }
   };
 
   const switchLoginType = (type) => {
     setLoginType(type);
-    if (!rememberMe || type === 'guest') {
-      setUserIdInput('');
-      setPasswordInput('');
-    } else {
-       const savedLogin = localStorage.getItem('schoolSavedLogin');
-       if(savedLogin){
-         const data = JSON.parse(savedLogin);
-         if(data.type === type){
-           setUserIdInput(data.id);
-           setPasswordInput(data.pass);
-         } else {
-           setUserIdInput(''); setPasswordInput('');
-         }
-       }
-    }
+    setUserIdInput('');
+    setPasswordInput('');
     setLoginError('');
   };
 
@@ -319,35 +353,43 @@ export default function App() {
     setCurrentStudentData(null);
     setCustomProfileImage(null);
     setArduinoProgress(0);
-    if(!rememberMe) {
-      setUserIdInput('');
-      setPasswordInput('');
-    }
+    setUserIdInput('');
+    setPasswordInput('');
     setShowProfileDropdown(false);
+    
+    localStorage.removeItem('activeDigitalSchoolSession');
   };
 
-  const handleSaveStudent = async (data) => {
-    setIsSaving(true);
-    try {
-      const colRef = collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students');
-      if (editingId) {
-        await updateDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', editingId), {
-          ...data,
-          updatedAt: serverTimestamp()
-        });
-      } else {
-        await addDoc(colRef, {
-          ...data,
-          createdAt: serverTimestamp()
-        });
-      }
-      setIsModalOpen(false);
-      setEditingId(null);
-    } catch (error) {
-      console.error("Firebase Error:", error);
-    } finally {
-      setIsSaving(false);
+  const handleSaveStudent = (data) => {
+    if (!data.studentId || !data.name) {
+      showAlert("សូមបញ្ចូលអត្តលេខ និងឈ្មោះសិស្សឲ្យបានត្រឹមត្រូវ!");
+      return;
     }
+    
+    setIsModalOpen(false);
+    const currentEditingId = editingId;
+    setEditingId(null);
+    setFormData({ studentId: '', name: '', gender: 'Male', grade: '' });
+
+    (async () => {
+      try {
+        const colRef = collection(db, 'artifacts', appId, 'public', 'data', 'students');
+        if (currentEditingId) {
+          await updateDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', currentEditingId), {
+            ...data,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          await addDoc(colRef, {
+            ...data,
+            createdAt: serverTimestamp()
+          });
+        }
+      } catch (error) {
+        console.error("Firebase Error:", error);
+        showAlert("បរាជ័យក្នុងការរក្សាទុកទិន្នន័យ: " + error.message);
+      }
+    })();
   };
 
   const handleEdit = (std) => {
@@ -356,14 +398,15 @@ export default function App() {
     setIsModalOpen(true);
   };
 
-  const handleDelete = async (id) => {
-      if(window.confirm('តើអ្នកពិតជាចង់លុបទិន្នន័យសិស្សនេះមែនទេ?')) {
+  const handleDelete = (id) => {
+      showConfirm('តើអ្នកពិតជាចង់លុបទិន្នន័យសិស្សនេះមែនទេ?', async () => {
         try {
-          await deleteDoc(doc(db, 'artifacts', 'digital-school', 'public', 'data', 'students', id));
+          await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'students', id));
         } catch (error) {
           console.error("Delete Error:", error);
+          showAlert("បរាជ័យក្នុងការលុប: " + error.message);
         }
-      }
+      });
   };
 
   const handleKeyDown = (e) => {
@@ -375,7 +418,7 @@ export default function App() {
     if (!file) return;
 
     if (!file.name.endsWith('.csv')) {
-      alert('សូម Save ឯកសារ Excel របស់អ្នកជាប្រភេទ .CSV (Comma Separated Values) សិនមុននឹងបញ្ជូល ដើម្បីឲ្យប្រព័ន្ធដំណើរការលឿននិងមិនគាំង។');
+      showAlert('សូម Save ឯកសារ Excel របស់អ្នកជាប្រភេទ .CSV (Comma Separated Values) សិនមុននឹងបញ្ជូល ដើម្បីឲ្យប្រព័ន្ធដំណើរការលឿននិងមិនគាំង។');
       if (excelInputRef.current) excelInputRef.current.value = '';
       return;
     }
@@ -390,7 +433,7 @@ export default function App() {
       for (let i = 1; i < rows.length; i++) {
         const cols = rows[i].split(',');
         if (cols.length >= 2 && cols[0].trim() !== '') {
-          const newDocRef = doc(collection(db, 'artifacts', 'digital-school', 'public', 'data', 'students'));
+          const newDocRef = doc(collection(db, 'artifacts', appId, 'public', 'data', 'students'));
           batch.set(newDocRef, {
              studentId: cols[0].trim().replace(/['"]/g, ''),
              name: cols[1] ? cols[1].trim().replace(/['"]/g, '') : '',
@@ -404,13 +447,13 @@ export default function App() {
       
       if (count > 0) {
          await batch.commit(); 
-         alert(`បានបញ្ចូលទិន្នន័យសិស្សចំនួន ${count} នាក់ដោយជោគជ័យ និងរហ័ស!`);
+         showAlert(`បានបញ្ចូលទិន្នន័យសិស្សចំនួន ${count} នាក់ដោយជោគជ័យ និងរហ័ស!`);
       } else {
-         alert("មិនមានទិន្នន័យត្រឹមត្រូវក្នុងឯកសារនេះទេ");
+         showAlert("មិនមានទិន្នន័យត្រឹមត្រូវក្នុងឯកសារនេះទេ");
       }
     } catch (err) {
       console.error("Excel Upload Error:", err);
-      alert('មានបញ្ហាក្នុងការអានឯកសារ។ សូមប្រាកដថាវាជាទម្រង់ .CSV');
+      showAlert('មានបញ្ហាក្នុងការបញ្ជូលឯកសារ: ' + err.message);
     } finally {
       setIsSaving(false);
       if(excelInputRef.current) excelInputRef.current.value = '';
@@ -468,13 +511,13 @@ export default function App() {
       const newProgress = 95; 
       setArduinoProgress(newProgress);
       localStorage.setItem(`progress_arduino_${currentStudentData.studentId}`, newProgress.toString());
-      alert('បានចាប់ផ្តើមមេរៀនដោយជោគជ័យ! លទ្ធផលសិក្សារបស់អ្នកត្រូវបាន Update។');
+      setStudyView('arduino_learning'); 
     }
   };
 
   if (!isLoggedIn) {
     return (
-      <div className={`relative min-h-screen ${isDarkMode ? 'bg-[#020617]' : 'bg-gray-900'} text-white overflow-y-auto overflow-x-hidden flex flex-col font-sans transition-colors duration-500`}>
+      <div className={`relative min-h-screen ${isDarkMode ? 'bg-[#020617]' : 'bg-gray-900'} text-white overflow-y-auto overflow-x-hidden flex flex-col transition-colors duration-500`} style={{ fontFamily: "'Siemreap', sans-serif" }}>
         <CyberBackground />
         
         <div className="relative w-full flex flex-col md:flex-row justify-between items-center p-6 md:p-10 z-20 gap-6 md:gap-0">
@@ -567,19 +610,6 @@ export default function App() {
                   </div>
                 )}
 
-                {loginType !== 'guest' && (
-                  <div className="flex items-center gap-2 pl-1 animate-in fade-in zoom-in-95 duration-300">
-                     <input 
-                       type="checkbox" 
-                       id="rememberMe" 
-                       checked={rememberMe}
-                       onChange={(e) => setRememberMe(e.target.checked)}
-                       className="w-4 h-4 rounded border-gray-600 bg-[#050b14] text-blue-500 focus:ring-blue-500/50 cursor-pointer"
-                     />
-                     <label htmlFor="rememberMe" className="text-xs text-gray-400 cursor-pointer hover:text-gray-200 transition-colors">ចងចាំគណនី</label>
-                  </div>
-                )}
-
                 <button 
                   onClick={handleLoginSubmit} 
                   className={`w-full mt-6 py-4 rounded-[14px] font-bold text-sm text-white tracking-wide shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all flex items-center justify-center gap-2 active:scale-[0.98] ${loginType === 'guest' ? 'bg-gradient-to-r from-emerald-700 to-emerald-500 hover:from-emerald-600 hover:to-emerald-400 shadow-[0_0_20px_rgba(16,185,129,0.4)]' : 'bg-gradient-to-r from-blue-700 to-blue-500 hover:from-blue-600 hover:to-blue-400'}`}
@@ -611,7 +641,7 @@ export default function App() {
   );
 
   return (
-    <div className={`min-h-screen flex ${isDarkMode ? 'bg-[#020617]' : 'bg-[#111827]'} text-white font-sans overflow-hidden selection:bg-blue-500/30 w-full relative transition-colors duration-500`}>
+    <div className={`min-h-screen flex ${isDarkMode ? 'bg-[#020617]' : 'bg-[#111827]'} text-white overflow-hidden selection:bg-blue-500/30 w-full relative transition-colors duration-500`} style={{ fontFamily: "'Siemreap', sans-serif" }}>
       
       {isSidebarOpen && (
         <div 
@@ -625,8 +655,8 @@ export default function App() {
         <div className="h-16 flex items-center justify-between px-6 border-b border-white/5">
           {isSidebarOpen && (
             <div className="flex items-center gap-3">
-              <GraduationCap size={24} className="text-white"/>
-              <span className="font-bold text-white tracking-wide">Cy digital school</span>
+              <GraduationCap size={24} className="text-white shrink-0"/>
+              <span className="font-bold text-white tracking-wide text-[11px] uppercase leading-tight">Digital pathway for Smart School</span>
             </div>
           )}
           {!isSidebarOpen && <GraduationCap size={24} className="mx-auto text-white hidden md:block"/>}
@@ -671,7 +701,7 @@ export default function App() {
              <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 hover:bg-white/10 rounded-lg text-gray-400 transition-colors">
                <Menu size={20} />
              </button>
-             <h2 className="font-bold text-white tracking-wide hidden sm:block text-sm md:text-base">Cy digital school</h2>
+             <h2 className="font-bold text-white tracking-wide hidden sm:block text-xs md:text-sm uppercase">Digital pathway for Smart School</h2>
           </div>
           
           <div className="flex items-center gap-3 md:gap-6">
@@ -718,7 +748,7 @@ export default function App() {
                              </div>
                              <button 
                                onClick={(e) => handleDeleteNotification(notif.id, e)}
-                               className="absolute top-3 right-3 p-1.5 bg-red-500/10 text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-500 hover:text-white"
+                               className="absolute top-3 right-3 p-1.5 bg-red-500/10 text-red-400 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:text-white"
                                title="លុបសារនេះ"
                              >
                                 <X size={14} />
@@ -770,59 +800,95 @@ export default function App() {
            {/* STUDENT DASHBOARD HOME */}
            {activeMenu === 'home' && role === 'student' && (
              <div className="max-w-5xl mx-auto animate-in fade-in duration-500 space-y-6">
-                <h2 className="text-xl md:text-2xl font-bold mb-4">ទំព័រដើម</h2>
                 
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                   <div onClick={() => handleMenuClick('study')} className="bg-[#131C31] border border-blue-900/40 p-6 rounded-2xl flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center gap-4 sm:gap-3 hover:bg-[#1A243D] transition-colors cursor-pointer shadow-lg">
-                      <GraduationCap size={40} className="text-[#00A3FF] shrink-0" />
-                      <div><h3 className="font-bold text-sm">កម្មវិធីសិក្សា</h3><p className="text-[10px] text-gray-400 mt-1 hidden sm:block">មើលកម្មវិធីសិក្សា</p></div>
-                   </div>
-                   <div onClick={() => handleMenuClick('youth')} className="bg-[#131C31] border border-green-900/40 p-6 rounded-2xl flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center gap-4 sm:gap-3 hover:bg-[#1A243D] transition-colors cursor-pointer shadow-lg">
-                      <Users size={40} className="text-[#10B981] shrink-0" />
-                      <div><h3 className="font-bold text-sm">កម្មវិធីយុវជន</h3><p className="text-[10px] text-gray-400 mt-1 hidden sm:block">ចូលរួមសកម្មភាព</p></div>
-                   </div>
-                   <div onClick={() => handleMenuClick('results')} className="bg-[#131C31] border border-purple-900/40 p-6 rounded-2xl flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center gap-4 sm:gap-3 hover:bg-[#1A243D] transition-colors cursor-pointer shadow-lg">
-                      <TrendingUp size={40} className="text-[#8B5CF6] shrink-0" />
-                      <div><h3 className="font-bold text-sm">លទ្ធផលសិក្សា</h3><p className="text-[10px] text-gray-400 mt-1 hidden sm:block">មើលលទ្ធផលសិក្សា</p></div>
-                   </div>
-                   <div onClick={() => handleMenuClick('profile')} className="bg-[#131C31] border border-orange-900/40 p-6 rounded-2xl flex flex-row sm:flex-col items-center justify-start sm:justify-center text-left sm:text-center gap-4 sm:gap-3 hover:bg-[#1A243D] transition-colors cursor-pointer shadow-lg">
-                      <UserCircle size={40} className="text-[#F59E0B] shrink-0" />
-                      <div><h3 className="font-bold text-sm">ព័ត៌មានផ្ទាល់ខ្លួន</h3><p className="text-[10px] text-gray-400 mt-1 hidden sm:block">ព័ត៌មានលម្អិត</p></div>
-                   </div>
-                </div>
-
-                {/* 1. អត្ថបទស្វាគមន៍ថ្មី ទម្រង់ Hero Section */}
-                <div className="bg-gradient-to-br from-[#0B1021] to-[#0A192F] border border-blue-500/30 p-8 md:p-10 rounded-3xl relative overflow-hidden shadow-[0_10px_40px_rgba(0,163,255,0.1)] group">
-                   <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-blue-500/10 rounded-full blur-[100px] -mr-40 -mt-40 transition-transform duration-1000 group-hover:scale-110"></div>
+                {/* 1. អត្ថបទស្វាគមន៍ថ្មី និងសេចក្តីសង្ខេបគម្រោង */}
+                <div className="bg-gradient-to-br from-[#0B1021] to-[#0A192F] border border-blue-500/30 rounded-3xl relative overflow-hidden shadow-[0_10px_40px_rgba(0,163,255,0.1)] group">
+                   <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[100px] -mr-40 -mt-40 transition-transform duration-1000 group-hover:scale-110"></div>
                    
-                   <div className="relative z-10">
+                   <div className="relative z-10 p-6 md:p-10 border-b border-white/5">
                       <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
                          <div className="flex-1 space-y-6">
                             <div>
-                               <h3 className="text-3xl md:text-4xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400 leading-tight">
-                                 ស្វាគមន៍មកកាន់វេទិកាសិក្សាអនឡាញរបស់យើង
+                               <h3 className="text-2xl md:text-3xl lg:text-4xl font-black mb-3 text-transparent bg-clip-text bg-gradient-to-r from-blue-400 via-teal-400 to-emerald-400 leading-tight">
+                                 គន្លងឌីជីថល សាលារៀនឆ្លាតវៃ
                                </h3>
-                               <p className="text-lg text-blue-200 font-medium tracking-wide">កន្លែងដែលការសិក្សា និងជំនាញជួបគ្នា</p>
+                               <p className="text-sm md:text-base text-blue-200 font-medium tracking-wide uppercase tracking-widest">Digital Pathway for Smart School</p>
                             </div>
                             
-                            <div className="text-gray-300 text-sm md:text-base leading-loose space-y-4">
-                               <p className="text-justify">
-                                  ចាប់ផ្តើមពីមូលដ្ឋាន ដល់កម្រិតខ្ពស់ សម្រាប់សិស្សថ្នាក់ទី 7 ដល់ 12។ រៀនមេរៀនសាលាឲយល់ច្បាស់ និងអាចយកទៅប្រើបានពិតប្រាកដ។ យើងផ្តល់ជូនការបន្ថែមជំនាញបច្ចេកវិទ្យាសំខាន់ៗ ដូចជា <span className="text-blue-400 font-bold bg-blue-500/10 px-2 py-1 rounded">Arduino IDE</span>, ការបង្កើត Project, ស្វែងយល់ពីការកាត់តវីដេអូ និងបង្កើត Content ដែលទាក់ទាញ។
+                            <div className="text-gray-300 text-sm md:text-base leading-relaxed space-y-4 text-justify">
+                               <p>
+                                  គម្រោង <strong>“គន្លងឌីជីថល សាលារៀនឆ្លាតវៃ (Digital Pathway for Smart School)”</strong> គឺជាប្រព័ន្ធបច្ចេកវិទ្យាសម័យថ្មីដែលបង្កើតឡើងដើម្បីជំរុញការផ្លាស់ប្តូរឌីជីថលក្នុងវិស័យអប់រំ។ គម្រោងនេះមានគោលបំណងដោះស្រាយបញ្ហាការគ្រប់គ្រងវត្តមានសិស្ស ការទំនាក់ទំនងរវាងសាលា និងអាណាព្យាបាល និងការតាមដានវឌ្ឍនភាពសិក្សា ដែលនៅតែប្រើវិធីសាស្ត្របុរាណនៅសាលាជាច្រើន។ 
                                </p>
-                               <p className="text-justify">
-                                  រៀនមិនត្រឹមតែទ្រឹស្តី ប៉ុន្តែអនុវត្តបានជាក់ស្តែង។ អភិវឌ្ឍខ្លួនឯងឲកាន់តែប្រសើរ ជាមួយជំនាញដែលត្រូវការនាពេលអនាគត។ មេរៀនត្រូវបានរៀបចំយ៉ាងច្បាស់ ងាយយល់ និងងាយអនុវត្ត អាចរៀនបានគ្រប់ពេល គ្រប់ទីកន្លែងតាមអ៊ីនធឺណិត។
+                               <p>
+                                  តាមរយៈប្រព័ន្ធនេះ សិស្សអាចចូលប្រើ Mobile Learning App ដើម្បីសិក្សាមុខវិជ្ជាសំខាន់ៗ មើលវីដេអូបង្រៀន ធ្វើលំហាត់ Quiz និងតាមដានពិន្ទុផ្ទាល់ខ្លួន។ ព្រមទាំងមានប្រព័ន្ធវត្តមានស្វ័យប្រវត្តិប្រើ RFID ឬ QR Code ភ្ជាប់ជាមួយឧបករណ៍ IoT ដូចជា <span className="text-blue-400 font-bold">ESP32</span> ដើម្បីកត់ត្រាវត្តមាន និងបញ្ជូនទិន្នន័យទៅ Cloud Database ក្នុងពេលពិត។
                                </p>
-                               <div className="font-medium text-emerald-400 border-l-4 border-emerald-500 pl-4 py-3 bg-emerald-500/10 rounded-r-xl">
-                                  <p className="mb-2">សាកសមសម្រាប់អ្នកចាប់ផ្តើម និងអ្នកចង់ពង្រឹងជំនាញ។ បង្កើតអនាគតដោយខ្លួនឯង ចាប់ផ្តើមពីថ្ងៃនេះ កុំរង់ចាំឱកាស តែបង្កើតឱកាសដោយខ្លួនឯង!</p>
-                                  <p className="text-xs text-emerald-200/80 italic">ចូលរួមជាមួយយើងឥឡូវនេះ និងចាប់ផ្តើមដំណើររបស់អ្នក។ រៀន បង្កើត និងរីកចម្រើន នៅទីនេះតែមួយកន្លែង។</p>
+                               <p>
+                                  បន្ទាប់ពីទិន្នន័យត្រូវបានកត់ត្រា ប្រព័ន្ធ Telegram Bot នឹងផ្ញើសារជូនដំណឹងទៅអាណាព្យាបាលភ្លាមៗនៅពេលសិស្សចូល ឬខកខានវត្តមាន។ សាលាក៏អាចប្រើ Dashboard ដើម្បីមើលស្ថិតិ វិភាគទិន្នន័យ និងកំណត់សិស្សដែលមានហានិភ័យខកខានជាបន្តបន្ទាប់។
+                               </p>
+                               <div className="font-medium text-emerald-400 border-l-4 border-emerald-500 pl-4 py-3 bg-emerald-500/10 rounded-r-xl my-4">
+                                  <p>គម្រោងនេះបង្ហាញពីការប្រើប្រាស់បច្ចេកវិទ្យា 4.0 ដូចជា IoT, Cloud Computing និងប្រព័ន្ធស្វ័យប្រវត្តិ ដើម្បីបង្កើនប្រសិទ្ធភាព ការទទួលខុសត្រូវ និងសុវត្ថិភាពក្នុងបរិបទសាលារៀន។</p>
                                </div>
+                               <p>
+                                  <strong>“គន្លងឌីជីថល សាលារៀនឆ្លាតវៃ”</strong> មិនមែនត្រឹមតែ App មួយទេ ប៉ុន្តែជាគន្លងបំលែងសាលារៀនទៅសម័យឌីជីថល ដែលភ្ជាប់សិស្ស គ្រូ អាណាព្យាបាល និងអ្នកគ្រប់គ្រងជាមួយគ្នាតាមប្រព័ន្ធតែមួយ ដែលអាចអភិវឌ្ឍបន្ត និងពង្រីកទៅសាលាទូទាំងប្រទេសបាននៅពេលអនាគត។
+                               </p>
                             </div>
                          </div>
-                         
-                         <div className="w-full md:w-auto shrink-0 flex items-center justify-center pt-4 md:pt-0">
-                            <button onClick={() => handleMenuClick('study')} className="w-full md:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-emerald-600 rounded-2xl font-bold text-white shadow-[0_0_30px_rgba(37,99,235,0.4)] hover:shadow-[0_0_40px_rgba(16,185,129,0.5)] transition-all flex items-center justify-center gap-3 hover:scale-105 hover:-translate-y-1">
-                               ចាប់ផ្តើមរៀនឥឡូវនេះ <PlayCircle size={20} className="animate-pulse" />
-                            </button>
+                      </div>
+                   </div>
+
+                   {/* Project Details Section */}
+                   <div className="p-6 md:p-10 bg-[#0A0F1E]/50">
+                      <h4 className="text-xl font-bold text-white mb-8 flex items-center gap-2"><FileText className="text-blue-500"/> សេចក្តីសង្ខេបនៃគម្រោង (Executive Summary)</h4>
+                      
+                      <div className="space-y-8">
+                         <div>
+                            <h5 className="text-blue-400 font-bold mb-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-blue-500"></div> ២. បញ្ហាដែលត្រូវដោះស្រាយ (Problem Statement)</h5>
+                            <ul className="space-y-2 text-sm text-gray-300 pl-5 border-l border-white/10 ml-1">
+                               <li><strong className="text-white">ការគ្រប់គ្រងវត្តមានបែបបុរាណ៖</strong> ការហៅឈ្មោះតាមសៀវភៅចំណាយពេលយូរ និងងាយបង្កកំហុស។</li>
+                               <li><strong className="text-white">កង្វះទំនាក់ទំនងភ្លាមៗ៖</strong> អាណាព្យាបាលពិបាកដឹងថា តើកូនរបស់ពួកគេបានទៅដល់សាលារៀន ឬអវត្តមានក្នុងពេលជាក់ស្តែង។</li>
+                               <li><strong className="text-white">ការសិក្សាក្រៅម៉ោងមានកម្រិត៖</strong> សិស្សមិនទាន់មានប្រព័ន្ធឌីជីថលសម្រាប់រំលឹកមេរៀន និងធ្វើតេស្តសមត្ថភាពដោយខ្លួនឯង។</li>
+                            </ul>
+                         </div>
+
+                         <div>
+                            <h5 className="text-emerald-400 font-bold mb-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-emerald-500"></div> ៣. ដំណោះស្រាយបច្ចេកវិទ្យា (The Solution)</h5>
+                            <ul className="space-y-2 text-sm text-gray-300 pl-5 border-l border-white/10 ml-1">
+                               <li><strong className="text-white">Hardware (IoT):</strong> ប្រើប្រាស់គ្រឿងបង្គុំ ESP32 រួមជាមួយ RFID ឬ QR Scanner ដើម្បីកត់ត្រាវត្តមានស្វ័យប្រវត្តិ។</li>
+                               <li><strong className="text-white">Mobile Learning App:</strong> កម្មវិធីសម្រាប់សិស្សសិក្សាតាមវីដេអូ ធ្វើលំហាត់ Quiz និងមើលពិន្ទុ។</li>
+                               <li><strong className="text-white">Telegram Bot Notification:</strong> ប្រព័ន្ធផ្ញើសារស្វ័យប្រវត្តិទៅកាន់អាណាព្យាបាលភ្លាមៗ។</li>
+                               <li><strong className="text-white">Admin Dashboard:</strong> ផ្ទាំងគ្រប់គ្រងសម្រាប់សាលាដើម្បីវិភាគទិន្នន័យ និងស្ថិតិសិស្ស។</li>
+                            </ul>
+                         </div>
+
+                         <div>
+                            <h5 className="text-purple-400 font-bold mb-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-purple-500"></div> ៤. ស្ថាបត្យកម្មបច្ចេកទេស (Technical Architecture)</h5>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm text-gray-300 pl-5">
+                               <div className="bg-[#131C31] p-4 rounded-xl border border-white/5"><strong className="text-purple-300 block mb-1">Front-end:</strong> Mobile App និង Web Dashboard។</div>
+                               <div className="bg-[#131C31] p-4 rounded-xl border border-white/5"><strong className="text-purple-300 block mb-1">Back-end & Database:</strong> Cloud Database (Firebase) សម្រាប់ Real-time Data។</div>
+                               <div className="bg-[#131C31] p-4 rounded-xl border border-white/5"><strong className="text-purple-300 block mb-1">IoT Device:</strong> ESP32 បញ្ជាការស្កេន និងបញ្ជូនទៅ Cloud តាម Wi-Fi។</div>
+                               <div className="bg-[#131C31] p-4 rounded-xl border border-white/5"><strong className="text-purple-300 block mb-1">Integration:</strong> Telegram API សម្រាប់ប្រព័ន្ធជូនដំណឹង។</div>
+                            </div>
+                         </div>
+
+                         <div>
+                            <h5 className="text-orange-400 font-bold mb-3 flex items-center gap-2"><div className="w-2 h-2 rounded-full bg-orange-500"></div> ៥. លក្ខណៈពិសេសនៃគម្រោង (Key Features)</h5>
+                            <ul className="space-y-2 text-sm text-gray-300 pl-5 border-l border-white/10 ml-1">
+                               <li><strong className="text-white">Smart Attendance:</strong> ស្កេនកាត ឬ QR Code ដើម្បីកត់វត្តមានក្នុងរយៈពេល ២ វិនាទី។</li>
+                               <li><strong className="text-white">Instant Alert:</strong> ផ្ញើសារទៅឪពុកម្តាយថា "កូនមកដល់សាលាហើយ" ឬ "កូនអវត្តមាន"។</li>
+                               <li><strong className="text-white">Digital Learning Hub:</strong> មេរៀនឌីជីថលដែលសិស្សអាចចូលរៀនបានគ្រប់ទីកន្លែង។</li>
+                               <li><strong className="text-white">Data Analytics:</strong> របាយការណ៍សង្ខេបអំពីអត្រាវត្តមាន និងវឌ្ឍនភាពសិក្សា។</li>
+                            </ul>
+                         </div>
+
+                         <div className="bg-gradient-to-r from-blue-900/20 to-transparent p-6 rounded-2xl border-l-4 border-blue-500">
+                            <h5 className="text-blue-400 font-bold mb-3 flex items-center gap-2">៧. ទស្សនវិស័យទៅថ្ងៃអនាគត (Future Vision)</h5>
+                            <p className="text-sm text-gray-300 leading-relaxed text-justify">
+                               គម្រោងនេះមិនមែនត្រឹមតែជាកម្មវិធី (App) មួយនោះទេ ប៉ុន្តែវាជា “គន្លង (Pathway)” ដែលនឹងពង្រីកខ្លួនទៅកាន់សាលារៀនទូទាំងប្រទេស។ នៅពេលអនាគត យើងអាចបញ្ចូលបច្ចេកវិទ្យា AI (Artificial Intelligence) ដើម្បីជួយវិភាគលើចំណុចខ្សោយរបស់សិស្សម្នាក់ៗ និងផ្តល់អនុសាសន៍មេរៀនដោយស្វ័យប្រវត្តិ។
+                            </p>
+                            <div className="mt-4 pt-4 border-t border-white/10 flex flex-col sm:flex-row justify-between items-start sm:items-center text-xs text-gray-400">
+                               <span>រៀបចំដោយ៖ <strong>ក្រុម Gen Z Digital Innovation</strong></span>
+                               <span>កាលបរិច្ឆេទ៖ ថ្ងៃទី០៣ ខែមីនា ឆ្នាំ២០២៦</span>
+                            </div>
                          </div>
                       </div>
                    </div>
@@ -959,37 +1025,52 @@ export default function App() {
              </div>
            )}
 
-           {/* 3. Study Program Hover Animations */}
+           {/* Study Program */}
            {activeMenu === 'study' && role === 'student' && (
              <div className="max-w-5xl mx-auto animate-in fade-in duration-500 space-y-6">
                 <div className="flex items-center gap-4 mb-6">
                    {studyView !== 'main' && (
-                      <button onClick={() => setStudyView(studyView === 'arduino' ? 'softskills' : 'main')} className="p-2 bg-white/5 hover:bg-white/10 rounded-xl transition-colors">
-                        <ArrowLeft size={20} />
+                      <button onClick={handleBack} className="px-4 py-2.5 bg-[#131C31] border border-white/10 hover:border-blue-500/50 hover:bg-[#1A243D] hover:text-blue-400 rounded-xl transition-all flex items-center gap-2 text-sm font-bold text-gray-300 shadow-sm shrink-0">
+                        <ArrowLeft size={18} /> <span className="hidden sm:block">ត្រឡប់ក្រោយ</span>
                       </button>
                    )}
-                   <h2 className="text-xl md:text-2xl font-bold">កម្មវិធីសិក្សា</h2>
+                   <h2 className="text-xl md:text-2xl font-bold">កម្មវិធីសិក្សា {studyView !== 'main' && '> លម្អិត'}</h2>
                 </div>
 
                 {studyView === 'main' && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-                     <div className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-gradient-to-br hover:from-[#1A243D] hover:to-[#0B1021] hover:border-blue-500/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(0,163,255,0.2)] transition-all duration-300 cursor-pointer relative overflow-hidden">
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                        <BookOpen size={48} className="text-blue-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500 relative z-10" />
-                        <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">កម្រិតអនុវិទ្យាល័យ</h3>
-                        <p className="text-sm text-gray-400 relative z-10">ថ្នាក់ទី ៧ ដល់ ទី ៩</p>
+                     <div className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-[#1A243D] hover:border-blue-400/60 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(0,163,255,0.3)] hover:ring-2 hover:ring-blue-500/20 transition-all duration-200 ease-out cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl group-hover:bg-blue-500/30 transition-all duration-300"></div>
+                        <div>
+                           <BookOpen size={48} className="text-blue-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                           <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">កម្រិតអនុវិទ្យាល័យ</h3>
+                           <p className="text-sm text-gray-400 relative z-10">ថ្នាក់ទី ៧ ដល់ ទី ៩</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-end text-blue-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300">
+                           <ArrowRight size={20} />
+                        </div>
                      </div>
-                     <div className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-gradient-to-br hover:from-[#1A243D] hover:to-[#0B1021] hover:border-emerald-500/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(16,185,129,0.2)] transition-all duration-300 cursor-pointer relative overflow-hidden">
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/20 transition-all duration-500"></div>
-                        <GraduationCap size={48} className="text-emerald-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-500 relative z-10" />
-                        <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">កម្រិតវិទ្យាល័យ</h3>
-                        <p className="text-sm text-gray-400 relative z-10">ថ្នាក់ទី ១០ ដល់ ទី ១២</p>
+                     <div className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-[#1A243D] hover:border-emerald-400/60 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(16,185,129,0.3)] hover:ring-2 hover:ring-emerald-500/20 transition-all duration-200 ease-out cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-500/10 rounded-full blur-2xl group-hover:bg-emerald-500/30 transition-all duration-300"></div>
+                        <div>
+                           <GraduationCap size={48} className="text-emerald-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                           <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">កម្រិតវិទ្យាល័យ</h3>
+                           <p className="text-sm text-gray-400 relative z-10">ថ្នាក់ទី ១០ ដល់ ទី ១២</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-end text-emerald-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300">
+                           <ArrowRight size={20} />
+                        </div>
                      </div>
-                     <div onClick={() => setStudyView('softskills')} className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-gradient-to-br hover:from-[#1A243D] hover:to-[#0B1021] hover:border-purple-500/40 hover:-translate-y-2 hover:shadow-[0_20px_40px_-10px_rgba(168,85,247,0.2)] transition-all duration-300 cursor-pointer relative overflow-hidden">
-                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/20 transition-all duration-500"></div>
-                        <Cpu size={48} className="text-purple-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 group-hover:-rotate-6 transition-transform duration-500 relative z-10" />
-                        <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">ជំនាញទន់</h3>
-                        <p className="text-sm text-gray-400 relative z-10">បច្ចេកវិទ្យា និងការអភិវឌ្ឍន៍</p>
+                     <div onClick={() => setStudyView('softskills')} className="group bg-[#131C31] border border-white/5 p-6 md:p-8 rounded-[2rem] hover:bg-[#1A243D] hover:border-purple-400/60 hover:-translate-y-2 hover:shadow-[0_0_30px_rgba(168,85,247,0.3)] hover:ring-2 hover:ring-purple-500/20 transition-all duration-200 ease-out cursor-pointer relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+                        <div className="absolute -right-6 -top-6 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl group-hover:bg-purple-500/30 transition-all duration-300"></div>
+                        <div>
+                           <Cpu size={48} className="text-purple-500 mb-6 group-hover:-translate-y-2 group-hover:scale-110 transition-transform duration-200 relative z-10" />
+                           <h3 className="text-lg md:text-xl font-bold mb-2 relative z-10">ជំនាញទន់</h3>
+                           <p className="text-sm text-gray-400 relative z-10">បច្ចេកវិទ្យា និងការអភិវឌ្ឍន៍</p>
+                        </div>
+                        <div className="mt-4 flex items-center justify-end text-purple-400 opacity-0 group-hover:opacity-100 group-hover:translate-x-2 transition-all duration-300">
+                           <ArrowRight size={20} />
+                        </div>
                      </div>
                   </div>
                 )}
@@ -1030,10 +1111,197 @@ export default function App() {
                      </div>
                   </div>
                 )}
+
+                {/* ផ្ទាំងមេរៀនលម្អិត Arduino */}
+                {studyView === 'arduino_learning' && (
+                  <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-8 pb-10">
+                     <div className="bg-gradient-to-r from-blue-900/40 to-[#0B1021] border border-blue-500/30 p-6 md:p-8 rounded-[2rem] shadow-[0_10px_40px_rgba(0,163,255,0.15)] relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-48 h-48 bg-blue-500/10 blur-[60px] rounded-full"></div>
+                        <h2 className="text-2xl md:text-3xl font-black text-white mb-3 relative z-10 flex items-center gap-3">
+                          <BookOpen className="text-blue-400"/> មូលដ្ឋានគ្រឹះ Arduino IDE
+                        </h2>
+                        <p className="text-sm md:text-base text-blue-200/80 relative z-10 max-w-2xl leading-relaxed">
+                          ជ្រើសរើសមេរៀននីមួយៗខាងក្រោមដើម្បីចូលរៀន។ (អ្នកអាចចុចបន្ថែមវីដេអូ ឬអត្ថបទលម្អិតក្នុងមេរៀននីមួយៗនៅពេលក្រោយដោយខ្លួនឯង)
+                        </p>
+                     </div>
+
+                     <div className="space-y-6">
+                        {/* ផ្នែកទី១ */}
+                        <div className="bg-[#131C31] border border-white/5 rounded-[2rem] overflow-hidden shadow-lg hover:border-blue-500/30 transition-all group/card">
+                           <div className="bg-gradient-to-r from-blue-900/20 to-transparent p-5 md:p-6 border-b border-white/5 flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-blue-500/20 border border-blue-500/30 flex items-center justify-center text-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.3)] shrink-0 group-hover/card:scale-110 transition-transform">
+                                 <BookOpen size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-1">ផ្នែកទី១៖ មូលដ្ឋានគ្រឹះ Arduino IDE</h3>
+                                <p className="text-xs md:text-sm text-blue-200/60">យល់ដឹងពីប្រវត្តិ ការប្រើប្រាស់ និងប្រភេទ Board សំខាន់ៗ ដែលជាគ្រឹះសម្រាប់ការសិក្សាបន្ត</p>
+                              </div>
+                           </div>
+                           <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0A0F1E]/30">
+                              {[
+                                'សេចក្តីផ្តើមអំពី Arduino និងមុខងាររបស់វា', 
+                                '១.៣ Arduino ធ្វើឲ្យភ្លឺ LED និងការយល់ដឹងពីកូដ', 
+                                '១.៤ ប្រភេទ Board របស់ Arduino (Uno, Mega 2560, Nano, Leonardo, Micro, LilyPad)', 
+                                '១.៥ តួនាទីសំខាន់ៗរបស់ Arduino (Input, Output, Brain, ដោះស្រាយបញ្ហា)', 
+                                'ការស្វែងយល់ពី Digital Pin, Analog Pin និង ATmega', 
+                                'ការតភ្ជាប់និងដំណើរការ Hardware ជាមួយ Software'
+                              ].map((lesson, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-3.5 bg-[#131C31] border border-white/5 rounded-xl hover:border-blue-500/40 hover:bg-[#1A243D] cursor-pointer group transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-[#0B1021] flex items-center justify-center border border-white/10 group-hover:border-blue-500 group-hover:text-blue-400 transition-colors shrink-0">
+                                          <PlayCircle size={14} />
+                                       </div>
+                                       <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-1">{idx + 1}. {lesson}</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">ចូលរៀន</span>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        {/* ផ្នែកទី២ */}
+                        <div className="bg-[#131C31] border border-white/5 rounded-[2rem] overflow-hidden shadow-lg hover:border-orange-500/30 transition-all group/card">
+                           <div className="bg-gradient-to-r from-orange-900/20 to-transparent p-5 md:p-6 border-b border-white/5 flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-orange-500/20 border border-orange-500/30 flex items-center justify-center text-orange-400 shadow-[0_0_15px_rgba(249,115,22,0.3)] shrink-0 group-hover/card:scale-110 transition-transform">
+                                 <Cpu size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-1">ផ្នែកទី២៖ ឧបករណ៍សម្រាប់ Arduino</h3>
+                                <p className="text-xs md:text-sm text-orange-200/60">ស្គាល់ឧបករណ៍សំខាន់ៗដែលត្រូវប្រើសម្រាប់ការអនុវត្ត និងបង្កើត Project</p>
+                              </div>
+                           </div>
+                           <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0A0F1E]/30">
+                              {[
+                                'Arduino Board', 
+                                'USB Cable', 
+                                'Breadboard', 
+                                'Jumper Wires', 
+                                'LED', 
+                                'Resistor', 
+                                'Push Button', 
+                                'Potentiometer', 
+                                'Sensors', 
+                                'Servo Motor', 
+                                'LCD Display'
+                              ].map((lesson, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-3.5 bg-[#131C31] border border-white/5 rounded-xl hover:border-orange-500/40 hover:bg-[#1A243D] cursor-pointer group transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-[#0B1021] flex items-center justify-center border border-white/10 group-hover:border-orange-500 group-hover:text-orange-400 transition-colors shrink-0">
+                                          <PlayCircle size={14} />
+                                       </div>
+                                       <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-1">{idx + 1}. {lesson}</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-orange-400 bg-orange-500/10 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">ចូលរៀន</span>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        {/* ផ្នែកទី៣ */}
+                        <div className="bg-[#131C31] border border-white/5 rounded-[2rem] overflow-hidden shadow-lg hover:border-teal-500/30 transition-all group/card">
+                           <div className="bg-gradient-to-r from-teal-900/20 to-transparent p-5 md:p-6 border-b border-white/5 flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-teal-500/20 border border-teal-500/30 flex items-center justify-center text-teal-400 shadow-[0_0_15px_rgba(20,184,166,0.3)] shrink-0 group-hover/card:scale-110 transition-transform">
+                                 <Settings size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-1">ផ្នែកទី៣៖ ការដំឡើង និងការតភ្ជាប់ Arduino</h3>
+                                <p className="text-xs md:text-sm text-teal-200/60">របៀបដំឡើងកម្មវិធី តភ្ជាប់ទៅកុំព្យូទ័រ និងត្រៀមសរសេរកូដ</p>
+                              </div>
+                           </div>
+                           <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0A0F1E]/30">
+                              {[
+                                'ដំឡើង Arduino IDE', 
+                                'តភ្ជាប់ Arduino ទៅកុំព្យូទ័រ', 
+                                'កំណត់ Board និង Port', 
+                                'ស្គាល់ Interface ក្នុង Arduino IDE'
+                              ].map((lesson, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-3.5 bg-[#131C31] border border-white/5 rounded-xl hover:border-teal-500/40 hover:bg-[#1A243D] cursor-pointer group transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-[#0B1021] flex items-center justify-center border border-white/10 group-hover:border-teal-500 group-hover:text-teal-400 transition-colors shrink-0">
+                                          <PlayCircle size={14} />
+                                       </div>
+                                       <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-1">{idx + 1}. {lesson}</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-teal-400 bg-teal-500/10 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">ចូលរៀន</span>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        {/* ផ្នែកទី៤ */}
+                        <div className="bg-[#131C31] border border-white/5 rounded-[2rem] overflow-hidden shadow-lg hover:border-purple-500/30 transition-all group/card">
+                           <div className="bg-gradient-to-r from-purple-900/20 to-transparent p-5 md:p-6 border-b border-white/5 flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-purple-500/20 border border-purple-500/30 flex items-center justify-center text-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.3)] shrink-0 group-hover/card:scale-110 transition-transform">
+                                 <FileText size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-1">ផ្នែកទី៤៖ ការសរសេរកូដ និងសាកល្បង</h3>
+                                <p className="text-xs md:text-sm text-purple-200/60">ជំហានដំបូងក្នុងការសរសេរកូដ និងការបញ្ជាឲ្យ LED ភ្លឺរលត់ (Blink)</p>
+                              </div>
+                           </div>
+                           <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 gap-3 bg-[#0A0F1E]/30">
+                              {[
+                                'កូដ Hello World', 
+                                'ការប្រើ setup() និង loop()', 
+                                'Blink LED និង ការបង្កើត LED ចំណាំង (Running Light)', 
+                                'Upload code ទៅ Board', 
+                                'Message Success',
+                                'ប្រើ Button ដើម្បីបើក/បិទ LED'
+                              ].map((lesson, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-3.5 bg-[#131C31] border border-white/5 rounded-xl hover:border-purple-500/40 hover:bg-[#1A243D] cursor-pointer group transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-[#0B1021] flex items-center justify-center border border-white/10 group-hover:border-purple-500 group-hover:text-purple-400 transition-colors shrink-0">
+                                          <PlayCircle size={14} />
+                                       </div>
+                                       <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-1">{idx + 1}. {lesson}</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">ចូលរៀន</span>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                        {/* ផ្នែកទី៥ */}
+                        <div className="bg-[#131C31] border border-white/5 rounded-[2rem] overflow-hidden shadow-lg hover:border-emerald-500/30 transition-all group/card md:col-span-2">
+                           <div className="bg-gradient-to-r from-emerald-900/20 to-transparent p-5 md:p-6 border-b border-white/5 flex items-center gap-4">
+                              <div className="w-14 h-14 rounded-2xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-[0_0_15px_rgba(16,185,129,0.3)] shrink-0 group-hover/card:scale-110 transition-transform">
+                                 <TrendingUp size={24} />
+                              </div>
+                              <div>
+                                <h3 className="text-lg md:text-xl font-bold text-white mb-1">ផ្នែកទី៥៖ ការអនុវត្តគម្រោង Robotics & STEAM</h3>
+                                <p className="text-xs md:text-sm text-emerald-200/60">អនុវត្តជាក់ស្តែង បង្កើត Project ដោយខ្លួនឯង និងអភិវឌ្ឍជំនាញ Robotics</p>
+                              </div>
+                           </div>
+                           <div className="p-4 md:p-6 grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0A0F1E]/30">
+                              {[
+                                'បង្កើត Circuit ដោយខ្លួនឯង', 
+                                'ប្រើ Sensor និង Motor', 
+                                'បង្កើត Project ងាយៗ', 
+                                'អភិវឌ្ឍទៅកាន់ Robot STEAM',
+                                'គម្រោង Line Follower និង Obstacle Avoidance Robot',
+                                'គម្រោងប្រព័ន្ធភ្លើងស្វ័យប្រវត្តិ (PIR Sensor)',
+                                'គម្រោងឧបករណ៍វាស់អាកាសធាតុ (Weather Station)'
+                              ].map((lesson, idx) => (
+                                 <div key={idx} className="flex items-center justify-between p-3.5 bg-[#131C31] border border-white/5 rounded-xl hover:border-emerald-500/40 hover:bg-[#1A243D] cursor-pointer group transition-all">
+                                    <div className="flex items-center gap-3">
+                                       <div className="w-8 h-8 rounded-full bg-[#0B1021] flex items-center justify-center border border-white/10 group-hover:border-emerald-500 group-hover:text-emerald-400 transition-colors shrink-0">
+                                          <PlayCircle size={14} />
+                                       </div>
+                                       <span className="text-sm font-medium text-gray-300 group-hover:text-white transition-colors line-clamp-1">{idx + 1}. {lesson}</span>
+                                    </div>
+                                    <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity shrink-0">ចូលរៀន</span>
+                                 </div>
+                              ))}
+                           </div>
+                        </div>
+
+                     </div>
+                  </div>
+                )}
              </div>
            )}
 
-           {/* 2. Youth Program Introduction Added */}
+           {/* Youth Program */}
            {activeMenu === 'youth' && role === 'student' && (
              <div className="max-w-5xl mx-auto animate-in fade-in duration-500 space-y-6">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4 md:mb-6">
@@ -1041,7 +1309,6 @@ export default function App() {
                    <p className="text-xs text-gray-400 bg-white/5 px-4 py-2 rounded-lg">ទស្សនាវីដេអូបន្ថែមលើបណ្ដាញសង្គម YouTube, Facebook, TikTok...</p>
                 </div>
                 
-                {/* អត្ថបទណែនាំកម្មវិធី VMC ថ្មី */}
                 <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-500/20 p-6 md:p-8 rounded-3xl mb-8 relative overflow-hidden shadow-lg hover:shadow-blue-500/10 transition-shadow">
                    <div className="absolute top-0 right-0 w-40 h-40 bg-blue-500/10 blur-[60px] rounded-full"></div>
                    <h3 className="text-xl md:text-2xl font-bold text-white mb-6 leading-relaxed">យុវជនក្លាយជាអ្នកដឹកនាំ ដោយចាប់ផ្តើមពីសហគមន៍</h3>
@@ -1058,7 +1325,7 @@ export default function App() {
                       <Mic size={40} className="text-red-400 mb-6 group-hover:scale-110 transition-transform duration-500" />
                       <h3 className="text-lg md:text-xl font-bold mb-3 text-white">កម្មវិធីជជែកដេញដោល</h3>
                       <p className="text-xs md:text-sm text-gray-400 leading-relaxed mb-6 flex-1">អភិវឌ្ឍសមត្ថភាពនិយាយជាសាធារណៈ ការត្រិះរិះពិចារណា និងភាពជាអ្នកដឹកនាំ។</p>
-                      <a href="https://youtube.com/playlist?list=PLNDdii0BfOGhUHKk8I4bav4YKo5xfmXV-&si=ZpnZLvzRIrOfhNpC" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-red-500/10 text-red-400 rounded-xl font-bold text-sm text-center hover:bg-red-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+                      <a href="https://youtube.com/playlist?list=PLNDdii0BfOGhUHKk8I4bav4YKo5xfmXV-&si=ZpnZLvzRIrOfhNpC" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-red-500/10 text-red-400 rounded-xl font-bold text-sm text-center hover:bg-red-50 hover:text-white transition-colors flex items-center justify-center gap-2">
                          <PlayCircle size={18}/> មើលវីដេអូ
                       </a>
                    </div>
@@ -1067,7 +1334,7 @@ export default function App() {
                       <Users size={40} className="text-blue-400 mb-6 group-hover:scale-110 transition-transform duration-500" />
                       <h3 className="text-lg md:text-xl font-bold mb-3 text-white">យុវជនស្ម័គ្រចិត្ត (VMC)</h3>
                       <p className="text-xs md:text-sm text-gray-400 leading-relaxed mb-6 flex-1">ចូលរួមសកម្មភាពសង្គម ការងារស្ម័គ្រចិត្ត និងជួយអភិវឌ្ឍសហគមន៍។</p>
-                      <a href="https://youtube.com/playlist?list=PLNDdii0BfOGgqYfbK2l_JP5wi-Afr0TF7&si=kUwjdM_hpYDh-TUt" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-blue-500/10 text-blue-400 rounded-xl font-bold text-sm text-center hover:bg-blue-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+                      <a href="https://youtube.com/playlist?list=PLNDdii0BfOGgqYfbK2l_JP5wi-Afr0TF7&si=kUwjdM_hpYDh-TUt" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-blue-500/10 text-blue-400 rounded-xl font-bold text-sm text-center hover:bg-blue-50 hover:text-white transition-colors flex items-center justify-center gap-2">
                          <PlayCircle size={18}/> មើលវីដេអូ
                       </a>
                    </div>
@@ -1076,7 +1343,7 @@ export default function App() {
                       <Cpu size={40} className="text-emerald-400 mb-6 group-hover:scale-110 transition-transform duration-500" />
                       <h3 className="text-lg md:text-xl font-bold mb-3 text-white">រ៉ូបូត និង STEAM</h3>
                       <p className="text-xs md:text-sm text-gray-400 leading-relaxed mb-6 flex-1">បង្កើតគម្រោងវិទ្យាសាស្ត្រ បច្ចេកវិទ្យា និងការច្នៃប្រឌិតនវានុវត្តន៍ថ្មីៗ។</p>
-                      <a href="https://youtu.be/eeK3HCoJWWI?si=3RPwfZUJRy7jv4Zn" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-emerald-500/10 text-emerald-400 rounded-xl font-bold text-sm text-center hover:bg-emerald-500 hover:text-white transition-colors flex items-center justify-center gap-2">
+                      <a href="https://youtu.be/eeK3HCoJWWI?si=3RPwfZUJRy7jv4Zn" target="_blank" rel="noopener noreferrer" className="w-full py-3 bg-emerald-500/10 text-emerald-400 rounded-xl font-bold text-sm text-center hover:bg-emerald-50 hover:text-white transition-colors flex items-center justify-center gap-2">
                          <PlayCircle size={18}/> មើលវីដេអូ
                       </a>
                    </div>
@@ -1142,7 +1409,7 @@ export default function App() {
            {/* MANAGE STUDENTS (ADMIN) */}
            {activeMenu === 'students' && role === 'admin' && (
              <div className="animate-in fade-in duration-500 space-y-6 max-w-7xl mx-auto w-full">
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
                    <div>
                      <h1 className="text-xl md:text-2xl font-bold">គ្រប់គ្រងសិស្ស</h1>
                      <p className="text-gray-500 text-xs md:text-sm mt-1">បន្ថែម កែប្រែ ឬលុបទិន្នន័យសិស្សចេញពីប្រព័ន្ធ</p>
@@ -1314,11 +1581,59 @@ export default function App() {
 
         </main>
         
-        <footer className="py-4 border-t border-white/5 text-center text-[10px] md:text-[11px] text-gray-500 flex items-center justify-center px-4 bg-[#0B1021]">
-           <span>វិទ្យាល័យស្ដៅសន្តិភាព VMC</span>
+        <footer className="py-5 border-t border-white/5 text-center flex flex-col items-center justify-center px-4 bg-[#0B1021] gap-1">
+           <span className="font-bold text-gray-300 text-xs md:text-sm">រៀបចំដោយយុវជន VMC នៃវិទ្យាល័យស្តៅសន្តិភាព</span>
+           <span className="text-[10px] md:text-xs text-blue-400/80 italic">ច្នៃប្រឌិតថ្ងៃនេះ កសាងភាពឆ្លាតវៃនៅថ្ងៃស្អែក (Innovating Today, Building Smart Tomorrow.)</span>
         </footer>
       </div>
 
+      {/* Custom Alert UI */}
+      {alertInfo.show && (
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-[#131C31] border border-blue-500/30 p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in-95 duration-200">
+               <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                     <AlertCircle size={24} />
+                  </div>
+                  <h3 className="font-bold text-white text-lg">ជូនដំណឹង</h3>
+               </div>
+               <p className="text-gray-300 text-sm mb-6 leading-relaxed">{alertInfo.message}</p>
+               <div className="flex justify-end">
+                  <button onClick={() => setAlertInfo({show: false, message: ''})} className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-colors">
+                     យល់ព្រម
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
+
+      {/* Custom Confirm UI */}
+      {confirmInfo.show && (
+         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+            <div className="bg-[#131C31] border border-red-500/30 p-6 rounded-2xl shadow-2xl max-w-sm w-full animate-in zoom-in-95 duration-200">
+               <div className="flex items-center gap-3 mb-4">
+                  <div className="w-10 h-10 rounded-full bg-red-500/20 flex items-center justify-center text-red-400 shrink-0">
+                     <AlertCircle size={24} />
+                  </div>
+                  <h3 className="font-bold text-white text-lg">បញ្ជាក់ការលុប</h3>
+               </div>
+               <p className="text-gray-300 text-sm mb-6 leading-relaxed">{confirmInfo.message}</p>
+               <div className="flex gap-3 justify-end">
+                  <button onClick={() => setConfirmInfo({show: false, message: '', onConfirm: null})} className="px-5 py-2 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl transition-colors">
+                     បោះបង់
+                  </button>
+                  <button onClick={() => {
+                     if (confirmInfo.onConfirm) confirmInfo.onConfirm();
+                     setConfirmInfo({show: false, message: '', onConfirm: null});
+                  }} className="px-6 py-2 bg-red-600 hover:bg-red-500 text-white font-bold rounded-xl transition-colors">
+                     លុប
+                  </button>
+               </div>
+            </div>
+         </div>
+      )}
+
+      {/* Add/Edit Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-[#000814]/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
            <div className="bg-[#131C31] border border-blue-500/30 p-6 md:p-8 rounded-[2rem] w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
