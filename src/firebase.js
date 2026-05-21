@@ -1,12 +1,13 @@
 import { initializeApp } from "firebase/app";
 
 const firebaseConfig = {
-  apiKey: "PASTE_NEW_KEY_HERE",
+  apiKey: "AIzaSyBGExtb5ZiemY3wWpWj_fbp5rp6BbaDbcc",
   authDomain: "school-app-36954.firebaseapp.com",
+  databaseURL: "https://school-app-36954-default-rtdb.asia-southeast1.firebasedatabase.app",
   projectId: "school-app-36954",
-  storageBucket: "school-app-36954.appspot.com",
+  storageBucket: "school-app-36954.firebasestorage.app",
   messagingSenderId: "449537720077",
-  appId: "1:449537720077:web:e206b310294713276a7a44"
+  appId: "1:449537720077:web:e206b310294713276a7a44",
 };
 
 export const app = initializeApp(firebaseConfig);
